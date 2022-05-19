@@ -1,6 +1,6 @@
 package org.veupathdb.eda.dumper.io;
 
-import org.veupathdb.eda.dumper.model.Variable;
+import org.veupathdb.eda.dumper.model.VariableDataPoint;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -14,7 +14,7 @@ public class VariableWriter<T> implements AutoCloseable {
     this.variableSerializer = byteConverter;
   }
 
-  public void writeVar(Variable<T> variable) throws IOException {
+  public void writeVar(VariableDataPoint<T> variable) throws IOException {
     outputStream.write(variableSerializer.convertToBytes(variable));
   }
 

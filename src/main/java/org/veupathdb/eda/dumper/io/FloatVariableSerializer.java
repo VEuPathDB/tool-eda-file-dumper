@@ -6,17 +6,22 @@ public class FloatVariableSerializer extends VariableSerializer<Float> {
   private static int FLOAT_LENGTH = 4;
 
   @Override
-  byte[] varValueToBytes(Float varValue) {
+  byte[] valueToBytes(Float varValue) {
     return ByteBuffer.allocate(FLOAT_LENGTH).putFloat(varValue).array();
   }
 
   @Override
-  Float varValueFromBytes(byte[] bytes) {
+  Float valueFromBytes(byte[] bytes) {
     return ByteBuffer.wrap(bytes).getFloat();
   }
 
   @Override
-  int varValueByteLength() {
+  Float valueFromByteBuffer(ByteBuffer byteBuffer) {
+    return byteBuffer.getFloat();
+  }
+
+  @Override
+  int valueLength() {
     return FLOAT_LENGTH;
   }
 }

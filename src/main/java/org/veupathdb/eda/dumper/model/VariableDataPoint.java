@@ -1,11 +1,11 @@
 package org.veupathdb.eda.dumper.model;
 
-public class Variable<T> {
+public class VariableDataPoint<T> {
   public int id;
   public T value;
 
-  public Variable(int varId, T value) {
-    this.id = varId;
+  public VariableDataPoint(int id, T value) {
+    this.id = id;
     this.value = value;
   }
 

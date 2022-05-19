@@ -2,7 +2,7 @@ package org.veupathdb.eda.dumper.io;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.veupathdb.eda.dumper.model.Variable;
+import org.veupathdb.eda.dumper.model.VariableDataPoint;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -14,11 +14,11 @@ public class IntVariableWriterTest {
 
   @Test
   public void testWriteAndRead() throws Exception {
-    final List<Variable<Integer>> intVars = Arrays.asList(
-        new Variable(0, 150),
-        new Variable(1, 200),
-        new Variable(2, 300),
-        new Variable(3, 550)
+    final List<VariableDataPoint<Integer>> intVars = Arrays.asList(
+        new VariableDataPoint(0, 150),
+        new VariableDataPoint(1, 200),
+        new VariableDataPoint(2, 300),
+        new VariableDataPoint(3, 550)
     );
     final int expectedByteArrayLength = 8 * intVars.size();
     final VariableSerializer<Integer> intSerializer = new IntVariableSerializer();
@@ -28,7 +28,7 @@ public class IntVariableWriterTest {
         final VariableWriter<Integer> writer = new VariableWriter(outputStream, intSerializer)) {
 
       // Write each variable to the output stream.
-      for (Variable<Integer> var : intVars) {
+      for (VariableDataPoint<Integer> var : intVars) {
         writer.writeVar(var);
       }
 
@@ -39,16 +39,16 @@ public class IntVariableWriterTest {
       try (final InputStream inputStream = new ByteArrayInputStream(outputBytes);
            final VariableReader<Integer> reader = new VariableReader(inputStream, intSerializer)) {
 
-        final Variable<Integer> var1 = reader.readVar();
+        final VariableDataPoint<Integer> var1 = reader.readVar();
         Assertions.assertEquals(0, var1.getId());
         Assertions.assertEquals(150, var1.getValue());
-        final Variable<Integer> var2 = reader.readVar();
+        final VariableDataPoint<Integer> var2 = reader.readVar();
         Assertions.assertEquals(1, var2.getId());
         Assertions.assertEquals(200, var2.getValue());
-        final Variable<Integer> var3 = reader.readVar();
+        final VariableDataPoint<Integer> var3 = reader.readVar();
         Assertions.assertEquals(2, var3.getId());
         Assertions.assertEquals(300, var3.getValue());
-        final Variable<Integer> var4 = reader.readVar();
+        final VariableDataPoint<Integer> var4 = reader.readVar();
         Assertions.assertEquals(3, var4.getId());
         Assertions.assertEquals(550, var4.getValue());
       }

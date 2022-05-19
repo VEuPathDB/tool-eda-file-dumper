@@ -2,7 +2,7 @@ package org.veupathdb.eda.dumper.io;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.veupathdb.eda.dumper.model.Variable;
+import org.veupathdb.eda.dumper.model.VariableDataPoint;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -14,10 +14,10 @@ public class FloatVariableWriterTest {
 
   @Test
   public void testWriteAndRead() throws Exception {
-    final List<Variable<Float>> floatVariables = Arrays.asList(
-        new Variable(0, 1.0f),
-        new Variable(1, 3.0f),
-        new Variable(2, 6.0f)
+    final List<VariableDataPoint<Float>> floatVariables = Arrays.asList(
+        new VariableDataPoint(0, 1.0f),
+        new VariableDataPoint(1, 3.0f),
+        new VariableDataPoint(2, 6.0f)
     );
     final int expectedByteArrayLength = 8 * floatVariables.size();
     final VariableSerializer<Float> floatConverter = new FloatVariableSerializer();
@@ -27,7 +27,7 @@ public class FloatVariableWriterTest {
         final VariableWriter<Float> writer = new VariableWriter(outputStream, floatConverter)) {
 
       // Write each variable to the output stream.
-      for (Variable<Float> var : floatVariables) {
+      for (VariableDataPoint<Float> var : floatVariables) {
         writer.writeVar(var);
       }
 
@@ -38,13 +38,13 @@ public class FloatVariableWriterTest {
       try (final InputStream inputStream = new ByteArrayInputStream(outputBytes);
            final VariableReader<Float> reader = new VariableReader(inputStream, floatConverter)) {
 
-        final Variable<Float> var1 = reader.readVar();
+        final VariableDataPoint<Float> var1 = reader.readVar();
         Assertions.assertEquals(0, var1.getId());
         Assertions.assertEquals(1.0f, var1.getValue());
-        final Variable<Float> var2 = reader.readVar();
+        final VariableDataPoint<Float> var2 = reader.readVar();
         Assertions.assertEquals(1, var2.getId());
         Assertions.assertEquals(3.0f, var2.getValue());
-        final Variable<Float> var3 = reader.readVar();
+        final VariableDataPoint<Float> var3 = reader.readVar();
         Assertions.assertEquals(2, var3.getId());
         Assertions.assertEquals(6.0f, var3.getValue());
       }

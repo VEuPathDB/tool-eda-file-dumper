@@ -5,17 +5,22 @@ import java.nio.ByteBuffer;
 public class IntVariableSerializer extends VariableSerializer<Integer> {
 
   @Override
-  byte[] varValueToBytes(Integer varValue) {
+  byte[] valueToBytes(Integer varValue) {
     return ByteBuffer.allocate(INT_LENGTH).putInt(varValue).array();
   }
 
   @Override
-  Integer varValueFromBytes(byte[] bytes) {
+  Integer valueFromBytes(byte[] bytes) {
     return ByteBuffer.wrap(bytes).getInt();
   }
 
   @Override
-  int varValueByteLength() {
+  Integer valueFromByteBuffer(ByteBuffer byteBuffer) {
+    return byteBuffer.getInt();
+  }
+
+  @Override
+  int valueLength() {
     return INT_LENGTH;
   }
 }

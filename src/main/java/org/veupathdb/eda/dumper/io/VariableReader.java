@@ -1,6 +1,6 @@
 package org.veupathdb.eda.dumper.io;
 
-import org.veupathdb.eda.dumper.model.Variable;
+import org.veupathdb.eda.dumper.model.VariableDataPoint;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,7 +19,7 @@ public class VariableReader<T> implements AutoCloseable {
    * @return The next float variable from the input stream.
    * @throws IOException
    */
-  public Variable<T> readVar() throws IOException {
+  public VariableDataPoint<T> readVar() throws IOException {
     byte[] bytes = new byte[variableSerializer.totalBytesNeeded()];
     inputStream.read(bytes);
     return variableSerializer.covertFromBytes(bytes);
