@@ -20,7 +20,7 @@ public class VariableReader<T> implements AutoCloseable {
    * @throws IOException
    */
   public Variable<T> readVar() throws IOException {
-    byte[] bytes = new byte[8];
+    byte[] bytes = new byte[variableSerializer.totalBytesNeeded()];
     inputStream.read(bytes);
     return variableSerializer.covertFromBytes(bytes);
   }
