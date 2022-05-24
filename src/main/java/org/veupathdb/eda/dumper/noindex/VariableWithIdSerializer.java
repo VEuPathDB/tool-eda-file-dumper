@@ -1,11 +1,16 @@
-package org.veupathdb.eda.dumper.io;
-
-import org.veupathdb.eda.dumper.model.Variable;
+package org.veupathdb.eda.dumper.noindex;
 
 import java.nio.ByteBuffer;
 
-public abstract class VariableSerializer<T> {
-  protected static int INT_LENGTH = 4;
+import org.veupathdb.eda.dumper.io.serializer.VariableSerializer;
+
+public class VariableWithIdSerializer<S,T> {
+
+  private final VariableSerializer<S,T> _valueSerializer;
+
+  public VariableWithIdSerializer(VariableSerializer<S,T> valueSerializer) {
+    _valueSerializer = valueSerializer;
+  }
 
   /**
    * Converts a variable to an array of bytes. The first 4 bytes are written as an integer variable identifier and the
@@ -17,7 +22,7 @@ public abstract class VariableSerializer<T> {
     final int bufferSize = totalBytesNeeded();
     final ByteBuffer byteBuffer = ByteBuffer.allocate(bufferSize);
     byteBuffer.putInt(variable.getId());
-    byteBuffer.put(varValueToBytes(variable.getValue()));
+    byteBuffer.put(_valueSerializer.varValueToBytes(variable.getValue()));
     return byteBuffer.array();
   }
 
@@ -34,20 +39,16 @@ public abstract class VariableSerializer<T> {
     }
     final ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
     final int varId = byteBuffer.getInt();
-    final byte[] varValueBytes = new byte[varValueByteLength()];
+    final byte[] varValueBytes = new byte[_valueSerializer.varValueByteLength()];
     byteBuffer.get(varValueBytes);
-    final T varValue = varValueFromBytes(varValueBytes);
+    final T varValue = _valueSerializer.varValueFromBytes(varValueBytes);
     return new Variable<T>(varId, varValue);
   }
 
   public int totalBytesNeeded() {
     // Keep 4 for the variable identifier and the rest for the value.
-    return INT_LENGTH + varValueByteLength();
+    return Integer.BYTES + _valueSerializer.varValueByteLength();
   }
 
-  abstract byte[] varValueToBytes(T varValue);
-
-  abstract T varValueFromBytes(byte[] bytes);
-
-  abstract int varValueByteLength();
 }
+

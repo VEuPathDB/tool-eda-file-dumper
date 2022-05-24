@@ -1,4 +1,4 @@
-package org.veupathdb.eda.dumper.model;
+package org.veupathdb.eda.dumper.noindex;
 
 public class Variable<T> {
   public int id;
