@@ -1,15 +1,13 @@
-package org.veupathdb.eda.dumper.io;
-
-import org.veupathdb.eda.dumper.model.Variable;
+package org.veupathdb.eda.dumper.noindex;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-public class VariableReader<T> implements AutoCloseable {
+public class VariableReader<S,T> implements AutoCloseable {
   private final InputStream inputStream;
-  private final VariableSerializer<T> variableSerializer;
+  private final VariableWithIdSerializer<S,T> variableSerializer;
 
-  public VariableReader(InputStream inputStream, VariableSerializer<T> byteConverter) {
+  public VariableReader(InputStream inputStream, VariableWithIdSerializer<S,T> byteConverter) {
     this.inputStream = inputStream;
     this.variableSerializer = byteConverter;
   }
