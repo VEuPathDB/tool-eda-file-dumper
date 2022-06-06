@@ -29,27 +29,27 @@ public class StudyDumper {
   }
   
   public void dumpStudy() {
-    PersistenceManager pm = new PersistenceManager(_studiesDirectory);
-    pm.createStudyDir(_study);
+    BinaryFilesManager bfm = new BinaryFilesManager(_studiesDirectory);
+    bfm.createStudyDir(_study);
     TreeNode<Entity> entityTree = _study.getEntityTree();
     Entity entity = entityTree.getContents();
     
     // Root study gets a special IDs file dumper (doesn't need parent ancestors)
-    dumpSubtree(entityTree, pm, () -> new IdFilesDumperForRoot(pm, _study, entity));    
+    dumpSubtree(entityTree, bfm, () -> new IdFilesDumperForRoot(bfm, _study, entity));    
   }
 
-  private void dumpSubtree(TreeNode<Entity> subTree, PersistenceManager pm, Supplier<FilesDumper> idsDumperSupplier) {
+  private void dumpSubtree(TreeNode<Entity> subTree, BinaryFilesManager bfm, Supplier<FilesDumper> idsDumperSupplier) {
     Entity entity = subTree.getContents();
     
-    dumpEntity(entity, pm, idsDumperSupplier);
+    dumpEntity(entity, bfm, idsDumperSupplier);
     
     for (TreeNode<Entity> child : subTree.getChildNodes()) {
       Entity childEntity = child.getContents();
-      dumpSubtree(child, pm, () -> new IdFilesDumper(pm, _study, childEntity, entity));
+      dumpSubtree(child, bfm, () -> new IdFilesDumper(bfm, _study, childEntity, entity));
     }
   }
   
-  private void dumpEntity(Entity entity, PersistenceManager pm, Supplier<FilesDumper> idsDumperSupplier) {
+  private void dumpEntity(Entity entity, BinaryFilesManager bfm, Supplier<FilesDumper> idsDumperSupplier) {
     
     // first select no variables to dump the ID and ancestors files
     handleResult(_dataSource, _study, entity, Optional.empty(), idsDumperSupplier);
@@ -58,7 +58,7 @@ public class StudyDumper {
     for (Variable variable : entity.getVariables()) {
       if (!variable.hasValues()) continue; // skip categories
       VariableWithValues valueVar = (VariableWithValues)variable;
-      handleResult(_dataSource, _study, entity, Optional.of(valueVar), () -> new VariableFilesDumper(pm, _study, entity, valueVar));
+      handleResult(_dataSource, _study, entity, Optional.of(valueVar), () -> new VariableFilesDumper(bfm, _study, entity, valueVar));
     }   
   }
 

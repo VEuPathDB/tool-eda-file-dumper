@@ -7,7 +7,7 @@ import org.veupathdb.service.eda.ss.model.Study;
 
 public class IdFilesDumper implements FilesDumper {
  
-  public IdFilesDumper(PersistenceManager pm, Study study, Entity entity, Entity parentEntity) {
+  public IdFilesDumper(BinaryFilesManager bfm, Study study, Entity entity, Entity parentEntity) {
     // TODO create and open relevant files for writing
   }
 

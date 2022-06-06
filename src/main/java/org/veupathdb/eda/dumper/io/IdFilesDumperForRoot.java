@@ -7,7 +7,7 @@ package org.veupathdb.eda.dumper.io;
 
   public class IdFilesDumperForRoot implements FilesDumper {
 
-    public IdFilesDumperForRoot(PersistenceManager pm, Study study, Entity entity) {
+    public IdFilesDumperForRoot(BinaryFilesManager bfm, Study study, Entity entity) {
       // TODO create and open relevant files for writing
     }
 

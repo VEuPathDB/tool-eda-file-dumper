@@ -9,7 +9,7 @@ import org.veupathdb.service.eda.ss.model.variable.VariableWithValues;
 
 public class VariableFilesDumper implements FilesDumper {
 
-  public VariableFilesDumper(PersistenceManager pm, Study study, Entity entity, VariableWithValues valueVar) {
+  public VariableFilesDumper(BinaryFilesManager bfm, Study study, Entity entity, VariableWithValues valueVar) {
     // TODO create and open relevant files for writing
   }
 

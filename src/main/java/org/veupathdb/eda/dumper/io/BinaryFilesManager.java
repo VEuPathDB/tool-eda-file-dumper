@@ -7,7 +7,7 @@ import org.veupathdb.service.eda.ss.model.Entity;
 import org.veupathdb.service.eda.ss.model.Study;
 import org.veupathdb.service.eda.ss.model.variable.Variable;
 
-public class PersistenceManager {
+public class BinaryFilesManager {
   final Path _studiesDirectory;
   
   /* 
@@ -22,7 +22,7 @@ public class PersistenceManager {
    *     
    */
 
-  public PersistenceManager(Path studiesDirectory) {
+  public BinaryFilesManager(Path studiesDirectory) {
     _studiesDirectory = studiesDirectory;
   }
   
