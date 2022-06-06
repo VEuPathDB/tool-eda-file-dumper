@@ -21,35 +21,37 @@ public class StudyDumper {
   private final Study _study;
   private final Path _studiesDirectory;
   private final String _appDbSchema;
+  private final BinaryFilesManager _bfm;
   public StudyDumper(DataSource dataSource, String appDbSchema, Path studiesDirectory, Study study) {
     _dataSource = dataSource;
     _appDbSchema = appDbSchema;
     _studiesDirectory = studiesDirectory;
     _study = study;
+    _bfm = new BinaryFilesManager(_studiesDirectory);
+
   }
   
   public void dumpStudy() {
-    BinaryFilesManager bfm = new BinaryFilesManager(_studiesDirectory);
-    bfm.createStudyDir(_study);
+    _bfm.createStudyDir(_study);
     TreeNode<Entity> entityTree = _study.getEntityTree();
-    Entity entity = entityTree.getContents();
+    Entity rootEntity = entityTree.getContents();
     
     // Root study gets a special IDs file dumper (doesn't need parent ancestors)
-    dumpSubtree(entityTree, bfm, () -> new IdFilesDumperForRoot(bfm, _study, entity));    
+    dumpSubtree(entityTree, () -> new IdFilesDumperForRoot(_bfm, _study, rootEntity));    
   }
 
-  private void dumpSubtree(TreeNode<Entity> subTree, BinaryFilesManager bfm, Supplier<FilesDumper> idsDumperSupplier) {
+  private void dumpSubtree(TreeNode<Entity> subTree, Supplier<FilesDumper> idsDumperSupplier) {
     Entity entity = subTree.getContents();
     
-    dumpEntity(entity, bfm, idsDumperSupplier);
+    dumpEntity(entity, idsDumperSupplier);
     
     for (TreeNode<Entity> child : subTree.getChildNodes()) {
       Entity childEntity = child.getContents();
-      dumpSubtree(child, bfm, () -> new IdFilesDumper(bfm, _study, childEntity, entity));
+      dumpSubtree(child, () -> new IdFilesDumper(_bfm, _study, childEntity, entity));
     }
   }
   
-  private void dumpEntity(Entity entity, BinaryFilesManager bfm, Supplier<FilesDumper> idsDumperSupplier) {
+  private void dumpEntity(Entity entity, Supplier<FilesDumper> idsDumperSupplier) {
     
     // first select no variables to dump the ID and ancestors files
     handleResult(_dataSource, _study, entity, Optional.empty(), idsDumperSupplier);
@@ -58,7 +60,7 @@ public class StudyDumper {
     for (Variable variable : entity.getVariables()) {
       if (!variable.hasValues()) continue; // skip categories
       VariableWithValues valueVar = (VariableWithValues)variable;
-      handleResult(_dataSource, _study, entity, Optional.of(valueVar), () -> new VariableFilesDumper(bfm, _study, entity, valueVar));
+      handleResult(_dataSource, _study, entity, Optional.of(valueVar), () -> new VariableFilesDumper(_bfm, _study, entity, valueVar));
     }   
   }
 
