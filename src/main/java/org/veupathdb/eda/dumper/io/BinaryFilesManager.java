@@ -62,7 +62,7 @@ public class BinaryFilesManager {
     return createFile(study, entity, IDS_MAP_FILE_NAME);
   }
 
-  Path getIdFile(Study study, Entity entity) {
+  Path getIdMapFile(Study study, Entity entity) {
     return getFile(study, entity, IDS_MAP_FILE_NAME);
   }
   
