@@ -22,6 +22,7 @@ import org.veupathdb.service.eda.ss.model.Entity;
 import org.veupathdb.service.eda.ss.model.Study;
 import org.veupathdb.service.eda.ss.model.db.FilteredResultFactory;
 import org.veupathdb.service.eda.ss.model.db.StudyFactory;
+import org.veupathdb.service.eda.ss.model.db.StudyResolver;
 import org.veupathdb.service.eda.ss.model.tabular.TabularReportConfig;
 import org.veupathdb.service.eda.ss.model.variable.Variable;
 import org.veupathdb.service.eda.ss.model.variable.VariableWithValues;
@@ -30,7 +31,7 @@ public class Main {
 
   private static final String APP_DB_SCHEMA = "eda.";
 
-  public static void main(String args[]) throws Exception {
+  public static void main(String[] args) throws Exception {
 
     if (args.length != 2) {
       System.err.println("USAGE: dumpFiles <studyId> <parentDirectory>");
@@ -54,8 +55,8 @@ public class Main {
         SupportedPlatform.ORACLE, connectionUrl, connectionUser, connectionPassword))) {
 
       DataSource ds = appDb.getDataSource();
-      StudyFactory studyFactory = new StudyFactory(ds, APP_DB_SCHEMA, false);
-      Study study = studyFactory.loadStudy(studyId);
+      StudyFactory studyFactory = new StudyFactory(ds, APP_DB_SCHEMA, false,false);
+      Study study = studyFactory.getStudyById(studyId);
 
       for (Entity entity : study.getEntityTree().flatten()) {
 
@@ -65,7 +66,7 @@ public class Main {
         // loop through variables, creating a file for each
         for (Variable variable : entity.getVariables()) {
           if (!variable.hasValues()) continue; // skip categories
-          VariableWithValues valueVar = (VariableWithValues)variable;
+          VariableWithValues<?> valueVar = (VariableWithValues<?>)variable;
           handleResult(ds, study, entity, Optional.of(valueVar), () -> new VariableFilesDumper(parentDirectory, study, entity, valueVar));
         }
       }
