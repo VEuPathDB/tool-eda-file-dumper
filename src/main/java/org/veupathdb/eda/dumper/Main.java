@@ -14,11 +14,12 @@ import org.veupathdb.eda.dumper.io.StudyDumper;
 import org.veupathdb.service.eda.ss.model.Study;
 import org.veupathdb.service.eda.ss.model.db.StudyFactory;
 
+
 public class Main {
 
   private static final String APP_DB_SCHEMA = "eda.";
 
-  public static void main(String args[]) throws Exception {
+  public static void main(String[] args) throws Exception {
 
     if (args.length != 2) {
       System.err.println("USAGE: dumpFiles <studyId> <parentDirectory>");
@@ -42,11 +43,12 @@ public class Main {
         SupportedPlatform.ORACLE, connectionUrl, connectionUser, connectionPassword))) {
 
       DataSource ds = appDb.getDataSource();
-      StudyFactory studyFactory = new StudyFactory(ds, APP_DB_SCHEMA, false);
-      Study study = studyFactory.loadStudy(studyId);
+      StudyFactory studyFactory = new StudyFactory(ds, APP_DB_SCHEMA, false, false);
+      Study study = studyFactory.getStudyById(studyId);
       
       StudyDumper studyDumper = new StudyDumper(ds, APP_DB_SCHEMA, studiesDirectory, study);
       studyDumper.dumpStudy();
+
 
     }
   }

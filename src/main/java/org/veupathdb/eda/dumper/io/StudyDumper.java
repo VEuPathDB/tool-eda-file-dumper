@@ -59,7 +59,7 @@ public class StudyDumper {
     // loop through variables, creating a file for each
     for (Variable variable : entity.getVariables()) {
       if (!variable.hasValues()) continue; // skip categories
-      VariableWithValues valueVar = (VariableWithValues)variable;
+      VariableWithValues<?> valueVar = (VariableWithValues<?>)variable;
       handleResult(_dataSource, _study, entity, Optional.of(valueVar), () -> new VariableFilesDumper(_bfm, _study, entity, valueVar));
     }   
   }
