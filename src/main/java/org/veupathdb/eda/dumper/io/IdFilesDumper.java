@@ -5,6 +5,17 @@ import java.util.List;
 import org.veupathdb.service.eda.ss.model.Entity;
 import org.veupathdb.service.eda.ss.model.Study;
 
+/**
+ * reads from:
+ *  - tabular stream
+ *  - parent idMap
+ *  - parent ancestor
+ * writes to
+ *  - idMap
+ *  - ancestor 
+ * @author sfischer
+ *
+ */
 public class IdFilesDumper implements FilesDumper {
  
   public IdFilesDumper(BinaryFilesManager bfm, Study study, Entity entity, Entity parentEntity) {

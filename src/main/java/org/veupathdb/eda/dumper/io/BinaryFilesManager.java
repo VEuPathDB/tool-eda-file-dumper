@@ -28,7 +28,7 @@ public class BinaryFilesManager {
  studies/
   study_GEMS1A/
     entity_EUPA_12345/   # an entity ID
-      ancestors          # ancestor ID indices.
+      ancestor_EUPA_5555_OB5677          # ancestor ID indices.
       ids_map            # index -> ID map
       var_EUPA_44444     # a variable file
       var_EUPA_55555     # another variable file
