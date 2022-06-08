@@ -12,6 +12,7 @@ import org.gusdb.fgputil.db.pool.DatabaseInstance;
 import org.gusdb.fgputil.db.pool.SimpleDbConfig;
 import org.veupathdb.eda.dumper.io.StudyDumper;
 import org.veupathdb.service.eda.ss.model.Study;
+import org.veupathdb.service.eda.ss.model.StudyOverview;
 import org.veupathdb.service.eda.ss.model.db.StudyFactory;
 
 
@@ -43,7 +44,7 @@ public class Main {
         SupportedPlatform.ORACLE, connectionUrl, connectionUser, connectionPassword))) {
 
       DataSource ds = appDb.getDataSource();
-      StudyFactory studyFactory = new StudyFactory(ds, APP_DB_SCHEMA, false, false);
+      StudyFactory studyFactory = new StudyFactory(ds, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED, false);
       Study study = studyFactory.getStudyById(studyId);
       
       StudyDumper studyDumper = new StudyDumper(ds, APP_DB_SCHEMA, studiesDirectory, study);
