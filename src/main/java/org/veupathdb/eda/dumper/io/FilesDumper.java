@@ -7,15 +7,15 @@ import java.io.FileOutputStream;
 
 import org.veupathdb.service.eda.ss.model.tabular.TabularResponses.ResultConsumer;
 import org.veupathdb.service.eda.ss.model.variable.VariableValueIdPair;
-import org.veupathdb.service.eda.ss.model.variable.converter.BinarySerializer;
-import org.veupathdb.service.eda.ss.model.variable.converter.ValueConverter;
-import org.veupathdb.service.eda.ss.model.variable.converter.ValueWithIdSerializer;
+import org.veupathdb.service.eda.ss.model.variable.binary.BinarySerializer;
+import org.veupathdb.service.eda.ss.model.variable.binary.BinaryConverter;
+import org.veupathdb.service.eda.ss.model.variable.binary.ValueWithIdSerializer;
 
 public interface FilesDumper extends ResultConsumer, AutoCloseable {
   
   public static final int BYTES_RESERVED_FOR_ID_STRING = 30;
   
-  default <T> BinaryValueWriter<VariableValueIdPair<T>> getVarIdPairBinaryWriter(File file, ValueConverter<T> converter) {
+  default <T> BinaryValueWriter<VariableValueIdPair<T>> getVarIdPairBinaryWriter(File file, BinaryConverter<T> converter) {
     try {
       final FileOutputStream outStream = new FileOutputStream(file);
       final BufferedOutputStream bufStream = new BufferedOutputStream(outStream);

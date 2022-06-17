@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.veupathdb.service.eda.ss.model.Entity;
 import org.veupathdb.service.eda.ss.model.Study;
 import org.veupathdb.service.eda.ss.model.variable.VariableValueIdPair;
-import org.veupathdb.service.eda.ss.model.variable.converter.StringValueConverter;
+import org.veupathdb.service.eda.ss.model.variable.binary.StringValueConverter;
 
 /**
  * Reads from:
