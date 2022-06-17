@@ -1,16 +1,19 @@
 package org.veupathdb.eda.dumper.io;
 
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.gusdb.fgputil.DualBufferBinaryRecordReader;
 import org.veupathdb.service.eda.ss.model.Entity;
 import org.veupathdb.service.eda.ss.model.Study;
-import org.veupathdb.service.eda.ss.model.variable.converter.BinarySerializer;
+import org.veupathdb.service.eda.ss.model.variable.VariableValueIdPair;
 import org.veupathdb.service.eda.ss.model.variable.converter.LongValueConverter;
+import org.veupathdb.service.eda.ss.model.variable.converter.StringValueConverter;
 import org.veupathdb.service.eda.ss.model.variable.converter.TupleSerializer;
+import org.veupathdb.service.eda.ss.model.variable.converter.ValueWithIdSerializer;
 
 /**
  * reads from:
@@ -26,30 +29,53 @@ import org.veupathdb.service.eda.ss.model.variable.converter.TupleSerializer;
 public class IdFilesDumper implements FilesDumper {
   private static final int RECORDS_PER_BUFFER = 100;
 
-  private DualBufferBinaryRecordReader ancestorReader;
-  private final BinarySerializer<List<Long>> serializer;
+  private final TupleSerializer<Long> _parentAncestorSerializer;
+  private final ValueWithIdSerializer<String> _parentIdMapSerializer;
+  private DualBufferBinaryRecordReader _parentAncestorReader;
+  private DualBufferBinaryRecordReader _parentIdMapReader;
+  private BinaryValueWriter<VariableValueIdPair<String>> _imfWriter;
+  private AtomicLong _idIndex = new AtomicLong(0);
+
 
   public IdFilesDumper(BinaryFilesManager bfm, Study study, Entity entity, Entity parentEntity) {
-    final Path ancestorFilePath = bfm.getAncestorFile(study, entity);
-    final int ancestorCount = entity.getAncestorEntities().size();
-    this.serializer = new TupleSerializer<>(new LongValueConverter(), ancestorCount);
+
+    // create input readers
+    _parentAncestorSerializer = new TupleSerializer<>(new LongValueConverter(), entity.getAncestorEntities().size());
+    _parentIdMapSerializer = new ValueWithIdSerializer<String>(new StringValueConverter(BYTES_RESERVED_FOR_ID_STRING));
     try {
-      this.ancestorReader = new DualBufferBinaryRecordReader(ancestorFilePath, serializer.numBytes(), RECORDS_PER_BUFFER);
+      _parentAncestorReader = 
+          new DualBufferBinaryRecordReader(
+              bfm.getAncestorFile(study, parentEntity), 
+              _parentAncestorSerializer.numBytes(), 
+              RECORDS_PER_BUFFER);
+      
+      _parentIdMapReader = 
+          new DualBufferBinaryRecordReader(
+              bfm.getIdMapFile(study, parentEntity), 
+              _parentIdMapSerializer.numBytes(), 
+              RECORDS_PER_BUFFER);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-    // TODO create and open relevant files for writing
-  }
+    
+    final File imf  = bfm.getIdMapFile(study, entity).toFile();
+    _imfWriter = getVarIdPairBinaryWriter(imf, new StringValueConverter(BYTES_RESERVED_FOR_ID_STRING));
 
+  // TODO create and open relevant files for writing
+  }
+  
   @Override
   public void consumeRow(List<String> row) throws IOException {
-    Optional<List<Long>> ancestorRow = ancestorReader.next().map(serializer::fromBytes);
-    // TODO write rows to each file for each passed row
+    Optional<List<Long>> parentAncestorRow = _parentAncestorReader.next().map(_parentAncestorSerializer::fromBytes);
+    Optional<VariableValueIdPair<String>> parentIdMapRow = _parentIdMapReader.next().map(_parentIdMapSerializer::fromBytes);
+
+  
   }
 
   @Override
   public void close() throws Exception {
-    this.ancestorReader.close();
+    _parentAncestorReader.close();
+    _parentIdMapReader.close();
   }
 
 }
