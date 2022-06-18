@@ -1,9 +1,12 @@
 package org.veupathdb.eda.dumper.io;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.gusdb.fgputil.DualBufferBinaryRecordReader;
@@ -31,11 +34,17 @@ public class IdFilesDumper implements FilesDumper {
 
   private final ListConverter<Long> _parentAncestorConverter;
   private final ValueWithIdDeserializer<String> _parentIdMapDeserializer;
-  private DualBufferBinaryRecordReader _parentAncestorReader;
-  private DualBufferBinaryRecordReader _parentIdMapReader;
-  private BinaryValueWriter<VariableValueIdPair<String>> _imfWriter;
-  private AtomicLong _idIndex = new AtomicLong(0);
+  private final DualBufferBinaryRecordReader _parentAncestorReader;
+  private final DualBufferBinaryRecordReader _parentIdMapReader;
+  private final BinaryValueWriter<VariableValueIdPair<String>> _idMapWriter;
+  private final BinaryValueWriter<List<Long>> _ancestorsWriter;
+  private final int _idColumnIndex;  // the position in the tabular stream of the entity ID
+  private final int _parentIdColumnIndex; // the position in the tabular stream of the parent's ID
+  
+  private List<Long> _currentParentAncestorRow;
+  private String _currentParentIdString = "initialized to a non-existent ID";
 
+  private AtomicLong _idIndex = new AtomicLong(0);
 
   public IdFilesDumper(BinaryFilesManager bfm, Study study, Entity entity, Entity parentEntity) {
 
@@ -58,24 +67,87 @@ public class IdFilesDumper implements FilesDumper {
       throw new RuntimeException(e);
     }
     
-    final File imf  = bfm.getIdMapFile(study, entity).toFile();
-    _imfWriter = getVarIdPairBinaryWriter(imf, new StringValueConverter(BYTES_RESERVED_FOR_ID_STRING));
+    final File idMapFile  = bfm.getIdMapFile(study, entity).toFile();
+    _idMapWriter = getVarAndIdBinaryWriter(idMapFile, new StringValueConverter(BYTES_RESERVED_FOR_ID_STRING));
 
-  // TODO create and open relevant files for writing
+    final File idAncestorFile  = bfm.getAncestorFile(study, entity).toFile();
+    _ancestorsWriter = getAncestorsWriter(idAncestorFile, 
+        new ListConverter<Long>(new LongValueConverter(), entity.getAncestorEntities().size() + 1));
+    
+    _idColumnIndex = entity.getAncestorEntities().size();  // row has ancestor IDs followed by this entity's ID
+    _parentIdColumnIndex = _idColumnIndex - 1;
   }
   
   @Override
   public void consumeRow(List<String> row) throws IOException {
-    Optional<List<Long>> parentAncestorRow = _parentAncestorReader.next().map(_parentAncestorConverter::fromBytes);
-    Optional<VariableValueIdPair<String>> parentIdMapRow = _parentIdMapReader.next().map(_parentIdMapDeserializer::fromBytes);
-
-  
+    
+    String curStringId = row.get(_idColumnIndex);
+    Long curIdIndex = _idIndex.getAndIncrement();
+    
+    // write out idMap row
+    VariableValueIdPair<String> idMap = new VariableValueIdPair<>(curIdIndex, curStringId);
+    _idMapWriter.writeValue(idMap);
+        
+    // write out ancestors row
+    advanceParentStreams(row.get(_parentIdColumnIndex));
+    List<Long> ancestorsRow = new ArrayList<Long>(_currentParentAncestorRow);
+    ancestorsRow.add(curIdIndex);
+    _ancestorsWriter.writeValue(ancestorsRow);
   }
-
+  
   @Override
   public void close() throws Exception {
     _parentAncestorReader.close();
     _parentIdMapReader.close();
+    _idMapWriter.close();
+    _ancestorsWriter.close();
   }
+
+  private BinaryValueWriter<List<Long>> getAncestorsWriter(File file, ListConverter<Long> converter) {
+    try {
+      final FileOutputStream outStream = new FileOutputStream(file);
+      final BufferedOutputStream bufStream = new BufferedOutputStream(outStream);
+      return new BinaryValueWriter<List<Long>>(bufStream, converter);
+    } catch (FileNotFoundException e) {
+      throw new RuntimeException(e);
+    }    
+  }
+  
+  /* advance parent streams to our current ID (if needed)
+   *   - read parent id map file to compare parent string ID with what we got from the tabular stream
+   *   - keep reading until they match
+   *   - in parallel read parent's ancestor file
+   *   - validate that the row from parent's id map file matches row from parent's ancestor file
+   *   - globally remember parent id string and ancestor file row
+   */
+  private void advanceParentStreams(String parentIdString) {
+    
+    while (!parentIdString.equals(_currentParentIdString)) {
+      
+      // remember current parent ID string
+      VariableValueIdPair<String> parentIdMapRow = 
+          _parentIdMapReader
+          .next()
+          .map(_parentIdMapDeserializer::fromBytes)
+          .orElseThrow(() -> new RuntimeException("Unexpected end of parent id map file"));
+      _currentParentIdString = parentIdMapRow.getValue();
+      
+      // remember current parent ancestor row
+      _currentParentAncestorRow = 
+        _parentAncestorReader
+        .next()
+        .map(_parentAncestorConverter::fromBytes)
+        .orElseThrow(() -> new RuntimeException("Unexpected end of parent ancestors file"));
+      
+      // validate, for the heck of it
+      if (_currentParentAncestorRow.size() == _idColumnIndex) 
+        throw new RuntimeException("Unexpected parent ancestor row size: " + _currentParentAncestorRow.size());
+      if (parentIdMapRow.getIdIndex() != _currentParentAncestorRow.get(_idColumnIndex-1)) 
+        throw new RuntimeException("Unexpected parent idIndex");      
+   } 
+    
+  }
+
+
 
 }

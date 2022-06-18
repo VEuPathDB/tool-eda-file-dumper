@@ -15,7 +15,7 @@ public interface FilesDumper extends ResultConsumer, AutoCloseable {
   
   public static final int BYTES_RESERVED_FOR_ID_STRING = 30;
   
-  default <T> BinaryValueWriter<VariableValueIdPair<T>> getVarIdPairBinaryWriter(File file, BinaryConverter<T> converter) {
+  default <T> BinaryValueWriter<VariableValueIdPair<T>> getVarAndIdBinaryWriter(File file, BinaryConverter<T> converter) {
     try {
       final FileOutputStream outStream = new FileOutputStream(file);
       final BufferedOutputStream bufStream = new BufferedOutputStream(outStream);
@@ -25,7 +25,5 @@ public interface FilesDumper extends ResultConsumer, AutoCloseable {
       throw new RuntimeException(e);
     }    
   }
-
-  // no additional methods; just want to join these two interfaces
 
 }

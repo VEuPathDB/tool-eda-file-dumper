@@ -11,7 +11,7 @@ import org.veupathdb.service.eda.ss.model.variable.binary.StringValueConverter;
 
 /**
  * Reads from:
- *  - tabular stream
+ *  - tabular stream (strings)
  * Writes to:
  *  - idMap
  *   
@@ -24,13 +24,13 @@ public class IdFilesDumperForRoot implements FilesDumper {
 
   public IdFilesDumperForRoot(BinaryFilesManager bfm, Study study, Entity entity) {
     final File imf  = bfm.getIdMapFile(study, entity).toFile();
-    _imfWriter = getVarIdPairBinaryWriter(imf, new StringValueConverter(BYTES_RESERVED_FOR_ID_STRING));
+    _imfWriter = getVarAndIdBinaryWriter(imf, new StringValueConverter(BYTES_RESERVED_FOR_ID_STRING));
   }
 
   @Override
   public void consumeRow(List<String> row) throws IOException {
-    VariableValueIdPair<String> record = new VariableValueIdPair<>(_idIndex.getAndIncrement(), extractIdFromRow(row));
-    _imfWriter.writeValue(record);
+    VariableValueIdPair<String> idMap = new VariableValueIdPair<>(_idIndex.getAndIncrement(), extractIdFromRow(row));
+    _imfWriter.writeValue(idMap);
   }
 
   @Override
