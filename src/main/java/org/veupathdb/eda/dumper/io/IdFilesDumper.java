@@ -26,6 +26,7 @@ import org.veupathdb.service.eda.ss.model.variable.binary.ListConverter;
  * writes to
  *  - idMap
  *  - ancestor 
+ *  
  * @author sfischer
  *
  */
@@ -67,6 +68,7 @@ public class IdFilesDumper implements FilesDumper {
       throw new RuntimeException(e);
     }
     
+    // create writers
     final File idMapFile  = bfm.getIdMapFile(study, entity).toFile();
     _idMapWriter = getVarAndIdBinaryWriter(idMapFile, new StringValueConverter(BYTES_RESERVED_FOR_ID_STRING));
 
@@ -74,6 +76,7 @@ public class IdFilesDumper implements FilesDumper {
     _ancestorsWriter = getAncestorsWriter(idAncestorFile, 
         new ListConverter<Long>(new LongValueConverter(), entity.getAncestorEntities().size() + 1));
     
+    // remember column indexes for minor efficiency
     _idColumnIndex = entity.getAncestorEntities().size();  // row has ancestor IDs followed by this entity's ID
     _parentIdColumnIndex = _idColumnIndex - 1;
   }
