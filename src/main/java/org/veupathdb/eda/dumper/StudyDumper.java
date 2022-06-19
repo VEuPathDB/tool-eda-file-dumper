@@ -1,4 +1,4 @@
-package org.veupathdb.eda.dumper.io;
+package org.veupathdb.eda.dumper;
 
 import java.nio.file.Path;
 import java.util.Collections;
@@ -60,7 +60,7 @@ public class StudyDumper {
     for (Variable variable : entity.getVariables()) {
       if (!variable.hasValues()) continue; // skip categories
       VariableWithValues<?> valueVar = (VariableWithValues<?>)variable;
-      handleResult(_dataSource, _study, entity, Optional.of(valueVar), () -> new VariableFilesDumper(_bfm, _study, entity, valueVar));
+      handleResult(_dataSource, _study, entity, Optional.of(valueVar), () -> new VariableFilesDumper<>(_bfm, _study, entity, valueVar));
     }   
   }
 

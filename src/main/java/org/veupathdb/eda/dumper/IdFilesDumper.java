@@ -1,4 +1,4 @@
-package org.veupathdb.eda.dumper.io;
+package org.veupathdb.eda.dumper;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
