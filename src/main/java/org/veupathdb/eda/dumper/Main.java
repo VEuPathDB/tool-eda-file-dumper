@@ -34,9 +34,9 @@ public class Main {
     }
 
     // read required environment vars
-    String connectionUrl = getRequiredVar("DB_CONNECTION_URL");
-    String connectionUser = getRequiredVar("DB_USERNAME");
-    String connectionPassword = getRequiredVar("DB_PASSWORD");
+    String connectionUrl = getRequiredVar("APP_DB_TNS_NAME");
+    String connectionUser = getRequiredVar("APP_DB_USER");
+    String connectionPassword = getRequiredVar("APP_DB_PASS");
 
     // instantiate a connection to the database
     try (DatabaseInstance appDb = new DatabaseInstance(SimpleDbConfig.create(

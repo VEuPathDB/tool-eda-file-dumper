@@ -21,15 +21,19 @@ public class BinaryFilesManager {
   private static final String ENTITY_FILE_PREFIX = "entity_";
   private static final String VAR_FILE_PREFIX = "var_";
   private static final String VOCAB_FILE_PREFIX = "vocab_";
+  
+  static final String META_KEY_NUM_ANCESTORS = "numAncestors";
 
   private static final Logger LOG = LogManager.getLogger(BinaryFilesManager.class);
 
   /* 
  studies/
   study_GEMS1A/
+    DONE                 # empty file indicating study dump completed successfully   
     entity_EUPA_12345/   # an entity ID
-      ancestor_EUPA_5555_OB5677          # ancestor ID indices.
+      ancestors          # ancestor ID indices.
       ids_map            # index -> ID map
+      meta.json          # simple info about the files
       var_EUPA_44444     # a variable file
       var_EUPA_55555     # another variable file
       vocab_EUPA_55555   # a vocabulary file
@@ -80,6 +84,10 @@ public class BinaryFilesManager {
   
   Path getVocabFile(Study study, Entity entity, Variable var) {
     return getFile(study, entity, getVocabFileName(var));
+  }
+  
+  Path getMetaJsonFile(Study study, Entity entity) {
+    return getFile(study, entity, "meta.json");   
   }
   
   ////////////////////////////////////////////////////////
