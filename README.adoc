@@ -37,9 +37,9 @@ The file structure produced on output is controlled by link:src/main/java/org/ve
 ```
 {
   "numAncestors" = 5,
-  "var_EUPA_4444" = "long",
-  "var_EUPA_5555" = "vocab",
-  "var_EUPA_6666" = "date"
+  "var_EUPA_4444" = "INTEGER",
+  "var_EUPA_5555" = "VOCAB",
+  "var_EUPA_6666" = "DATE"
 }
 ```
 Supported variable types are `long`, `date`, `string`, `vocab`
