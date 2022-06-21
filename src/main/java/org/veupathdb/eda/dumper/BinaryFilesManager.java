@@ -23,6 +23,7 @@ public class BinaryFilesManager {
   private static final String VOCAB_FILE_PREFIX = "vocab_";
   
   static final String META_KEY_NUM_ANCESTORS = "numAncestors";
+  static final String DONE_FILE_NAME = "DONE";
 
   private static final Logger LOG = LogManager.getLogger(BinaryFilesManager.class);
 
@@ -86,8 +87,31 @@ public class BinaryFilesManager {
     return getFile(study, entity, getVocabFileName(var));
   }
   
+  Path createMetaJsonFile(Study study, Entity entity) {
+    return createFile(study, entity, "meta.json");   
+  }
+  
   Path getMetaJsonFile(Study study, Entity entity) {
     return getFile(study, entity, "meta.json");   
+  }
+  
+  Path createDoneFile(Study study) {
+    Path filepath = Path.of(getStudyDir(study).toString(), DONE_FILE_NAME);
+    LOG.info("Creating file: " + filepath);
+    try {
+      Files.createFile(filepath);
+    } catch (FileAlreadyExistsException e) {
+      throw new RuntimeException("Failed creating file '" + filepath + "'.  It already exists.", e);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }  
+    return filepath;
+  }
+  
+  Path getDoneFile(Study study) {
+    Path filepath = Path.of(getStudyDir(study).toString(), DONE_FILE_NAME);
+    if (!Files.exists(filepath)) throw new RuntimeException("File '" + filepath + "' does not exist");
+    return filepath;
   }
   
   ////////////////////////////////////////////////////////

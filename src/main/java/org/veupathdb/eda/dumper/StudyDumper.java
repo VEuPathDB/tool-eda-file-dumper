@@ -4,9 +4,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -19,7 +17,6 @@ import org.veupathdb.service.eda.ss.model.Study;
 import org.veupathdb.service.eda.ss.model.db.FilteredResultFactory;
 import org.veupathdb.service.eda.ss.model.tabular.TabularReportConfig;
 import org.veupathdb.service.eda.ss.model.variable.Variable;
-import org.veupathdb.service.eda.ss.model.variable.VariableType;
 import org.veupathdb.service.eda.ss.model.variable.VariableWithValues;
 
 public class StudyDumper {
@@ -44,6 +41,7 @@ public class StudyDumper {
     
     // Root study gets a special IDs file dumper (doesn't need parent ancestors)
     dumpSubtree(entityTree, () -> new IdFilesDumperForRoot(_bfm, _study, rootEntity));
+    writeDoneFile();
   }
 
   private void dumpSubtree(TreeNode<Entity> subTree, Supplier<FilesDumper> idsDumperSupplier) {
@@ -92,12 +90,22 @@ public class StudyDumper {
   }
   
   private void writeMetaJsonFile(JSONObject metaJson, Entity entity) {
-    try (FileWriter writer = new FileWriter(_bfm.getMetaJsonFile(_study, entity).toFile())) {
+    try (FileWriter writer = new FileWriter(_bfm.createMetaJsonFile(_study, entity).toFile())) {
       writer.write(metaJson.toString(2));
       writer.flush();
     } catch (IOException e) {
       throw new RuntimeException("Failed writing meta.json file.", e);
     }   
   }
+  
+  private void writeDoneFile() {
+    try (FileWriter writer = new FileWriter(_bfm.createDoneFile(_study).toFile())) {
+      writer.write("");
+      writer.flush();
+    } catch (IOException e) {
+      throw new RuntimeException("Failed writing DONE file.", e);
+    }   
+  }
+
   
 }
