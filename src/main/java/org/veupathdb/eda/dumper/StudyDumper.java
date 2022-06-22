@@ -12,6 +12,7 @@ import javax.sql.DataSource;
 
 import org.gusdb.fgputil.functional.TreeNode;
 import org.json.JSONObject;
+import org.veupathdb.eda.dumper.BinaryFilesManager.Operation;
 import org.veupathdb.service.eda.ss.model.Entity;
 import org.veupathdb.service.eda.ss.model.Study;
 import org.veupathdb.service.eda.ss.model.db.FilteredResultFactory;
@@ -35,7 +36,7 @@ public class StudyDumper {
   }
   
   public void dumpStudy() {
-    _bfm.createStudyDir(_study);
+    _bfm.getStudyDir(_study, Operation.WRITE);
     TreeNode<Entity> entityTree = _study.getEntityTree();
     Entity rootEntity = entityTree.getContents();
     
@@ -57,8 +58,6 @@ public class StudyDumper {
   
   private void dumpEntity(Entity entity, Supplier<FilesDumper> idsDumperSupplier) {
     
-    _bfm.createEntityDir(_study, entity);
-
     // create an object that will track minor meta info about the files, sufficient to parse them into text
     JSONObject metaJson = new JSONObject();
     metaJson.put(BinaryFilesManager.META_KEY_NUM_ANCESTORS, entity.getAncestorEntities().size());
@@ -74,7 +73,7 @@ public class StudyDumper {
       
       handleResult(_dataSource, _study, entity, Optional.of(valueVar), () -> new VariableFilesDumper<>(_bfm, _study, entity, valueVar));
 
-      metaJson.put(_bfm.getVariableFile(_study, entity, variable).getFileName().toString(), 
+      metaJson.put(_bfm.getVariableFile(_study, entity, variable, Operation.READ).getFileName().toString(), 
           valueVar.getType().name());
     }   
     
@@ -87,12 +86,12 @@ public class StudyDumper {
       FilteredResultFactory.produceTabularSubset(ds, _appDbSchema, study, entity, vars, List.of(), new TabularReportConfig(), dumper);
     }
     catch (Exception e) {
-      throw new RuntimeException("Could not dump files for study " + study.getStudyId(), e);
+      throw new RuntimeException("Could not dump files for study " + study.getStudyId());
     }
   }
   
   private void writeMetaJsonFile(JSONObject metaJson, Entity entity) {
-    try (FileWriter writer = new FileWriter(_bfm.createMetaJsonFile(_study, entity).toFile())) {
+    try (FileWriter writer = new FileWriter(_bfm.getMetaJsonFile(_study, entity, Operation.WRITE).toFile())) {
       writer.write(metaJson.toString(2));
       writer.flush();
     } catch (IOException e) {
@@ -101,7 +100,7 @@ public class StudyDumper {
   }
   
   private void writeDoneFile() {
-    try (FileWriter writer = new FileWriter(_bfm.createDoneFile(_study).toFile())) {
+    try (FileWriter writer = new FileWriter(_bfm.getDoneFile(_study, Operation.WRITE).toFile())) {
       writer.write("");
       writer.flush();
     } catch (IOException e) {

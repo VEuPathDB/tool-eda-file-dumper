@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.gusdb.fgputil.DualBufferBinaryRecordReader;
+import org.veupathdb.eda.dumper.BinaryFilesManager.Operation;
 import org.veupathdb.service.eda.ss.model.Entity;
 import org.veupathdb.service.eda.ss.model.Study;
 import org.veupathdb.service.eda.ss.model.variable.VariableValueIdPair;
@@ -41,6 +42,7 @@ public class IdFilesDumper implements FilesDumper {
   private final BinaryValueWriter<List<Long>> _ancestorsWriter;
   private final int _idColumnIndex;  // the position in the tabular stream of the entity ID
   private final int _parentIdColumnIndex; // the position in the tabular stream of the parent's ID
+  boolean _firstRow = true;
   
   private List<Long> _currentParentAncestorRow;
   private String _currentParentIdString = "initialized to a non-existent ID";
@@ -55,13 +57,13 @@ public class IdFilesDumper implements FilesDumper {
     try {
       _parentAncestorReader = 
           new DualBufferBinaryRecordReader(
-              bfm.getAncestorFile(study, parentEntity), 
+              bfm.getAncestorFile(study, parentEntity, Operation.READ), 
               _parentAncestorConverter.numBytes(), 
               RECORDS_PER_BUFFER);
       
       _parentIdMapReader = 
           new DualBufferBinaryRecordReader(
-              bfm.getIdMapFile(study, parentEntity), 
+              bfm.getIdMapFile(study, parentEntity, Operation.READ), 
               _parentIdMapDeserializer.numBytes(), 
               RECORDS_PER_BUFFER);
     } catch (IOException e) {
@@ -69,10 +71,10 @@ public class IdFilesDumper implements FilesDumper {
     }
     
     // create writers
-    final File idMapFile  = bfm.createIdMapFile(study, entity).toFile();
+    final File idMapFile  = bfm.getIdMapFile(study, entity, Operation.WRITE).toFile();
     _idMapWriter = getVarAndIdBinaryWriter(idMapFile, new StringValueConverter(BYTES_RESERVED_FOR_ID_STRING));
 
-    final File idAncestorFile  = bfm.createAncestorFile(study, entity).toFile();
+    final File idAncestorFile  = bfm.getAncestorFile(study, entity, Operation.WRITE).toFile();
     _ancestorsWriter = getAncestorsWriter(idAncestorFile, 
         new ListConverter<Long>(new LongValueConverter(), entity.getAncestorEntities().size() + 1));
     
@@ -83,6 +85,7 @@ public class IdFilesDumper implements FilesDumper {
   
   @Override
   public void consumeRow(List<String> row) throws IOException {
+    if (_firstRow) { _firstRow = false; return; } // skip header
     
     String curStringId = row.get(_idColumnIndex);
     Long curIdIndex = _idIndex.getAndIncrement();
