@@ -34,7 +34,7 @@ public class Main {
     }
 
     // read required environment vars
-    String connectionUrl = getRequiredVar("APP_DB_TNS_NAME");
+    String connectionUrl = getRequiredVar("APP_DB_CONNECT");
     String connectionUser = getRequiredVar("APP_DB_USER");
     String connectionPassword = getRequiredVar("APP_DB_PASS");
 
