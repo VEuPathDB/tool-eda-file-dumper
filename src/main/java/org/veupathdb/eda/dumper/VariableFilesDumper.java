@@ -18,7 +18,7 @@ public class VariableFilesDumper<T> implements FilesDumper {
 
   public VariableFilesDumper(BinaryFilesManager bfm, Study study, Entity entity, VariableWithValues<T> valueVar) {
     _valueVar = valueVar;
-    final File varFile  = bfm.getVariableFile(study, entity, valueVar).toFile();
+    final File varFile  = bfm.createVariableFile(study, entity, valueVar).toFile();
     _varFileWriter = getVarAndIdBinaryWriter(varFile, valueVar.getBinaryConverter());
     _valColumnIndex = entity.getAncestorEntities().size() + 1;  // row has ancestor IDs followed by this entity's ID, then value
   }

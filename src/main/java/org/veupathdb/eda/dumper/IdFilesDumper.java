@@ -69,10 +69,10 @@ public class IdFilesDumper implements FilesDumper {
     }
     
     // create writers
-    final File idMapFile  = bfm.getIdMapFile(study, entity).toFile();
+    final File idMapFile  = bfm.createIdMapFile(study, entity).toFile();
     _idMapWriter = getVarAndIdBinaryWriter(idMapFile, new StringValueConverter(BYTES_RESERVED_FOR_ID_STRING));
 
-    final File idAncestorFile  = bfm.getAncestorFile(study, entity).toFile();
+    final File idAncestorFile  = bfm.createAncestorFile(study, entity).toFile();
     _ancestorsWriter = getAncestorsWriter(idAncestorFile, 
         new ListConverter<Long>(new LongValueConverter(), entity.getAncestorEntities().size() + 1));
     

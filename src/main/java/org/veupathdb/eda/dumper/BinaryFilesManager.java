@@ -59,7 +59,7 @@ public class BinaryFilesManager {
   Path getEntityDir(Study study, Entity entity, Operation op) {
     if (op == Operation.READ) return getEntityDir(study, entity);
     else {
-      Path entityDir = Path.of(_studiesDirectory.toString(), getStudyDir(study).toString(), getEntityDirName(entity));
+      Path entityDir = Path.of(_studiesDirectory.toString(), getStudyDir(study).getFileName().toString(), getEntityDirName(entity));
       createDir(entityDir);
       return entityDir;
     }
