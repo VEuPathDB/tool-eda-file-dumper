@@ -24,6 +24,8 @@ public class BinaryFilesManager {
   
   static final String META_KEY_NUM_ANCESTORS = "numAncestors";
   static final String DONE_FILE_NAME = "DONE";
+  
+  enum Operation { READ, WRITE };
 
   private static final Logger LOG = LogManager.getLogger(BinaryFilesManager.class);
 
@@ -45,70 +47,52 @@ public class BinaryFilesManager {
     _studiesDirectory = studiesDirectory;
   }
   
-  void createStudyDir(Study study) {
-    Path studyDir = Path.of(_studiesDirectory.toString(), getStudyDirName(study));
-    createDir(studyDir);
+  Path getStudyDir(Study study, Operation op) {
+    if (op == Operation.READ) return getStudyDir(study);
+    else {
+      Path studyDir = Path.of(_studiesDirectory.toString(), getStudyDirName(study));
+      createDir(studyDir);
+      return studyDir;
+    }
   }
 
-  void createEntityDir(Study study, Entity entity) {
-    Path entityDir = Path.of(_studiesDirectory.toString(), getStudyDir(study).toString(), getEntityDirName(entity));
-    createDir(entityDir);      
+  Path getEntityDir(Study study, Entity entity, Operation op) {
+    if (op == Operation.READ) return getEntityDir(study, entity);
+    else {
+      Path entityDir = Path.of(_studiesDirectory.toString(), getStudyDir(study).toString(), getEntityDirName(entity));
+      createDir(entityDir);
+      return entityDir;
+    }
   }
   
-  Path createAncestorFile(Study study, Entity entity) {
+  Path getAncestorFile(Study study, Entity entity, Operation op) {
+    if (op == Operation.READ) return getFile(study, entity, ANCESTORS_FILE_NAME);
     return createFile(study, entity, ANCESTORS_FILE_NAME);
   }
 
-  Path getAncestorFile(Study study, Entity entity) {
-    return getFile(study, entity, ANCESTORS_FILE_NAME);
-  }
-  
-  Path createIdMapFile(Study study, Entity entity) {
+  Path getIdMapFile(Study study, Entity entity, Operation op) {
+    if (op == Operation.READ) return getFile(study, entity, IDS_MAP_FILE_NAME);
     return createFile(study, entity, IDS_MAP_FILE_NAME);
   }
-
-  Path getIdMapFile(Study study, Entity entity) {
-    return getFile(study, entity, IDS_MAP_FILE_NAME);
-  }
   
-  Path createVariableFile(Study study, Entity entity, Variable var) {
+  Path getVariableFile(Study study, Entity entity, Variable var, Operation op) {
+    if (op == Operation.READ) return getFile(study, entity, getVarFileName(var));
     return createFile(study, entity, getVarFileName(var));
   }
   
-  Path getVariableFile(Study study, Entity entity, Variable var) {
-    return getFile(study, entity, getVarFileName(var));
-  }
-  
-  Path createVocabFile(Study study, Entity entity, Variable var) {
+  Path getVocabFile(Study study, Entity entity, Variable var, Operation op) {
+    if (op == Operation.READ) return getFile(study, entity, getVocabFileName(var));
     return createFile(study, entity, getVocabFileName(var));
   }
   
-  Path getVocabFile(Study study, Entity entity, Variable var) {
-    return getFile(study, entity, getVocabFileName(var));
-  }
-  
-  Path createMetaJsonFile(Study study, Entity entity) {
+  Path getMetaJsonFile(Study study, Entity entity, Operation op) {
+    if (op == Operation.READ) return getFile(study, entity, "meta.json");   
     return createFile(study, entity, "meta.json");   
   }
-  
-  Path getMetaJsonFile(Study study, Entity entity) {
-    return getFile(study, entity, "meta.json");   
-  }
-  
-  Path createDoneFile(Study study) {
-    Path filepath = Path.of(getStudyDir(study).toString(), DONE_FILE_NAME);
-    LOG.info("Creating file: " + filepath);
-    try {
-      Files.createFile(filepath);
-    } catch (FileAlreadyExistsException e) {
-      throw new RuntimeException("Failed creating file '" + filepath + "'.  It already exists.", e);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }  
-    return filepath;
-  }
-  
-  Path getDoneFile(Study study) {
+ 
+  Path getDoneFile(Study study, Operation op) {
+    if (op == Operation.READ) return createDoneFile(study);
+    
     Path filepath = Path.of(getStudyDir(study).toString(), DONE_FILE_NAME);
     if (!Files.exists(filepath)) throw new RuntimeException("File '" + filepath + "' does not exist");
     return filepath;
@@ -176,7 +160,20 @@ public class BinaryFilesManager {
     if (!Files.isDirectory(studyDir)) throw new RuntimeException("Study directory '" + studyDir + "' does not exist");
     return studyDir;
   }
+
+  private Path createDoneFile(Study study) {
+    Path filepath = Path.of(getStudyDir(study).toString(), DONE_FILE_NAME);
+    LOG.info("Creating file: " + filepath);
+    try {
+      Files.createFile(filepath);
+    } catch (FileAlreadyExistsException e) {
+      throw new RuntimeException("Failed creating file '" + filepath + "'.  It already exists.", e);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }  
+    return filepath;
+  }
   
 
-
+  
 }
