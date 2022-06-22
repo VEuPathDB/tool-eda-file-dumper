@@ -28,8 +28,11 @@ public class VariableFilesDumper<T> implements FilesDumper {
   @Override
   public void consumeRow(List<String> row) throws IOException {
     if (_firstRow) { _firstRow = false; return; } // skip header
+
+    Long idIndex = _idIndex.getAndIncrement(); // unconditionally increment the id index
+    if (row.get(1).equals("")) return;            // but don't output missing data rows
     
-    VariableValueIdPair<T> var = new VariableValueIdPair<T>(_idIndex.getAndIncrement(), extractValueFromRow(row));
+    VariableValueIdPair<T> var = new VariableValueIdPair<T>(idIndex, extractValueFromRow(row));
     _varFileWriter.writeValue(var);
   }
 
