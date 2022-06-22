@@ -23,7 +23,7 @@ public class IdFilesDumperForRoot implements FilesDumper {
   private AtomicLong _idIndex = new AtomicLong(0);
 
   public IdFilesDumperForRoot(BinaryFilesManager bfm, Study study, Entity entity) {
-    final File imf  = bfm.getIdMapFile(study, entity).toFile();
+    final File imf  = bfm.createIdMapFile(study, entity).toFile();
     _imfWriter = getVarAndIdBinaryWriter(imf, new StringValueConverter(BYTES_RESERVED_FOR_ID_STRING));
   }
 

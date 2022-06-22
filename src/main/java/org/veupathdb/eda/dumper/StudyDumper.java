@@ -57,6 +57,8 @@ public class StudyDumper {
   
   private void dumpEntity(Entity entity, Supplier<FilesDumper> idsDumperSupplier) {
     
+    _bfm.createEntityDir(_study, entity);
+
     // create an object that will track minor meta info about the files, sufficient to parse them into text
     JSONObject metaJson = new JSONObject();
     metaJson.put(BinaryFilesManager.META_KEY_NUM_ANCESTORS, entity.getAncestorEntities().size());
@@ -85,7 +87,7 @@ public class StudyDumper {
       FilteredResultFactory.produceTabularSubset(ds, _appDbSchema, study, entity, vars, List.of(), new TabularReportConfig(), dumper);
     }
     catch (Exception e) {
-      throw new RuntimeException("Could not dump files for study " + study.getStudyId());
+      throw new RuntimeException("Could not dump files for study " + study.getStudyId(), e);
     }
   }
   

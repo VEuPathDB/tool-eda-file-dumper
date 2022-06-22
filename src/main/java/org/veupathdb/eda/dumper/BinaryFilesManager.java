@@ -51,7 +51,7 @@ public class BinaryFilesManager {
   }
 
   void createEntityDir(Study study, Entity entity) {
-    Path entityDir = Path.of(_studiesDirectory.toString(), getStudyDir(study).toString(), getEntityDirName(entity));
+    Path entityDir = Path.of(_studiesDirectory.toString(), getStudyDir(study).getFileName().toString(), getEntityDirName(entity));
     createDir(entityDir);      
   }
   
