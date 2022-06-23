@@ -6,7 +6,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
@@ -37,6 +36,8 @@ import org.veupathdb.service.eda.ss.model.variable.binary.ListConverter;
  */
 public class IdFilesDumper implements FilesDumper {
   private static final int RECORDS_PER_BUFFER = 100;
+  private final static int ID_COLUMN_INDEX = 0;  // the position in tabular stream of entity ID
+  private final static int PARENT_ID_COLUMN_INDEX = 1; // the position in the tabular stream of the parent's ID
 
   private final ListConverter<Long> _parentAncestorConverter;
   private final ValueWithIdDeserializer<String> _parentIdMapDeserializer;
@@ -44,11 +45,9 @@ public class IdFilesDumper implements FilesDumper {
   private final DualBufferBinaryRecordReader _parentIdMapReader;
   private final BinaryValueWriter<VariableValueIdPair<String>> _idMapWriter;
   private final BinaryValueWriter<List<Long>> _ancestorsWriter;
-  private final int _idColumnIndex;  // the position in the tabular stream of the entity ID
-  private final int _parentIdColumnIndex; // the position in the tabular stream of the parent's ID
   boolean _firstRow = true;
   
-  private List<Long> _currentParentAncestorRow = Collections.emptyList();  // default to no parent ancestors.
+  private List<Long> _currentParentAncestorRow;
   private String _currentParentIdString = "initialized to a non-existent ID";
 
   private AtomicLong _idIndex = new AtomicLong(0);
@@ -67,6 +66,12 @@ public class IdFilesDumper implements FilesDumper {
               _parentAncestorConverter.numBytes(), 
               RECORDS_PER_BUFFER))
           : Optional.empty();
+          
+          // if no ancestor reader then initialize the parent ancestor row.
+          if (_parentAncestorReader.isEmpty()) {
+            _currentParentAncestorRow = new ArrayList<Long>();
+            _currentParentAncestorRow.add(0L);  // initialize with a fake ID.  will be overwritten.
+          }
       
       _parentIdMapReader = 
           new DualBufferBinaryRecordReader(
@@ -84,17 +89,13 @@ public class IdFilesDumper implements FilesDumper {
     final File idAncestorFile  = bfm.getAncestorFile(study, entity, Operation.WRITE).toFile();
     _ancestorsWriter = getAncestorsWriter(idAncestorFile, 
         new ListConverter<Long>(new LongValueConverter(), entity.getAncestorEntities().size() + 1));
-    
-    // remember column indexes for minor efficiency
-    _idColumnIndex = entity.getAncestorEntities().size();  // row has ancestor IDs followed by this entity's ID
-    _parentIdColumnIndex = _idColumnIndex - 1;
   }
   
   @Override
   public void consumeRow(List<String> row) throws IOException {
     if (_firstRow) { _firstRow = false; return; } // skip header
     
-    String curStringId = row.get(_idColumnIndex);
+    String curStringId = row.get(ID_COLUMN_INDEX);
     Long curIdIndex = _idIndex.getAndIncrement();
     
     // write out idMap row
@@ -102,7 +103,7 @@ public class IdFilesDumper implements FilesDumper {
     _idMapWriter.writeValue(idMap);
         
    // write out ancestors row
-   advanceParentStreams(row.get(_parentIdColumnIndex));
+   advanceParentStreams(row.get(PARENT_ID_COLUMN_INDEX));
    List<Long> ancestorsRow = new ArrayList<Long>(_currentParentAncestorRow);
     ancestorsRow.add(curIdIndex);
     _ancestorsWriter.writeValue(ancestorsRow);
@@ -156,9 +157,9 @@ public class IdFilesDumper implements FilesDumper {
       }
 
       // validate, for the heck of it
-      if (_currentParentAncestorRow.size() != _idColumnIndex)
+      if (_currentParentAncestorRow.size() != ID_COLUMN_INDEX)
         throw new RuntimeException("Unexpected parent ancestor row size: " + _currentParentAncestorRow.size());
-      if (parentIdMapRow.getIdIndex() != _currentParentAncestorRow.get(_idColumnIndex - 1))
+      if (parentIdMapRow.getIdIndex() != _currentParentAncestorRow.get(ID_COLUMN_INDEX - 1))
         throw new RuntimeException("Unexpected parent idIndex");
     }   
   }
