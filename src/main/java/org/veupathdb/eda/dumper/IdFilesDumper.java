@@ -6,7 +6,9 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.gusdb.fgputil.DualBufferBinaryRecordReader;
@@ -36,7 +38,7 @@ public class IdFilesDumper implements FilesDumper {
 
   private final ListConverter<Long> _parentAncestorConverter;
   private final ValueWithIdDeserializer<String> _parentIdMapDeserializer;
-  private final DualBufferBinaryRecordReader _parentAncestorReader;
+  private final Optional<DualBufferBinaryRecordReader> _parentAncestorReader;
   private final DualBufferBinaryRecordReader _parentIdMapReader;
   private final BinaryValueWriter<VariableValueIdPair<String>> _idMapWriter;
   private final BinaryValueWriter<List<Long>> _ancestorsWriter;
@@ -44,7 +46,7 @@ public class IdFilesDumper implements FilesDumper {
   private final int _parentIdColumnIndex; // the position in the tabular stream of the parent's ID
   boolean _firstRow = true;
   
-  private List<Long> _currentParentAncestorRow;
+  private List<Long> _currentParentAncestorRow = Collections.emptyList();  // default to no parent ancestors.
   private String _currentParentIdString = "initialized to a non-existent ID";
 
   private AtomicLong _idIndex = new AtomicLong(0);
@@ -55,11 +57,14 @@ public class IdFilesDumper implements FilesDumper {
     _parentAncestorConverter = new ListConverter<>(new LongValueConverter(), entity.getAncestorEntities().size());
     _parentIdMapDeserializer = new ValueWithIdDeserializer<String>(new StringValueConverter(BYTES_RESERVED_FOR_ID_STRING));
     try {
-      _parentAncestorReader = 
+      // only need parent ancestor reader if parent has ancestors
+      _parentAncestorReader = parentEntity.getAncestorEntities().size() != 0?
+          Optional.of(
           new DualBufferBinaryRecordReader(
               bfm.getAncestorFile(study, parentEntity, Operation.READ), 
               _parentAncestorConverter.numBytes(), 
-              RECORDS_PER_BUFFER);
+              RECORDS_PER_BUFFER))
+          : Optional.empty();
       
       _parentIdMapReader = 
           new DualBufferBinaryRecordReader(
@@ -103,7 +108,7 @@ public class IdFilesDumper implements FilesDumper {
   
   @Override
   public void close() throws Exception {
-    _parentAncestorReader.close();
+    _parentAncestorReader.ifPresent(r -> r.close());
     _parentIdMapReader.close();
     _idMapWriter.close();
     _ancestorsWriter.close();
@@ -138,19 +143,19 @@ public class IdFilesDumper implements FilesDumper {
           .orElseThrow(() -> new RuntimeException("Unexpected end of parent id map file"));
       _currentParentIdString = parentIdMapRow.getValue();
       
-      // remember current parent ancestor row
-      _currentParentAncestorRow = 
-        _parentAncestorReader
-        .next()
-        .map(_parentAncestorConverter::fromBytes)
-        .orElseThrow(() -> new RuntimeException("Unexpected end of parent ancestors file"));
-      
-      // validate, for the heck of it
-      if (_currentParentAncestorRow.size() == _idColumnIndex) 
-        throw new RuntimeException("Unexpected parent ancestor row size: " + _currentParentAncestorRow.size());
-      if (parentIdMapRow.getIdIndex() != _currentParentAncestorRow.get(_idColumnIndex-1)) 
-        throw new RuntimeException("Unexpected parent idIndex");      
-   } 
+      // there is probably a fancier way to do this with Optional
+      if (_parentAncestorReader.isPresent()) {
+        // remember current parent ancestor row
+        _currentParentAncestorRow = _parentAncestorReader.get().next().map(_parentAncestorConverter::fromBytes)
+            .orElseThrow(() -> new RuntimeException("Unexpected end of parent ancestors file"));
+
+        // validate, for the heck of it
+        if (_currentParentAncestorRow.size() == _idColumnIndex)
+          throw new RuntimeException("Unexpected parent ancestor row size: " + _currentParentAncestorRow.size());
+        if (parentIdMapRow.getIdIndex() != _currentParentAncestorRow.get(_idColumnIndex - 1))
+          throw new RuntimeException("Unexpected parent idIndex");
+      }
+    }
     
   }
 
