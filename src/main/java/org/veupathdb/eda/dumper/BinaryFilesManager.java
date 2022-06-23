@@ -163,9 +163,9 @@ public class BinaryFilesManager {
 
   private Path createDoneFile(Path directory) {
     Path filepath = Path.of(directory.toString(), DONE_FILE_NAME);
-    LOG.info("Creating file: " + directory);
+    LOG.info("Creating file: " + filepath);
     try {
-      Files.createFile(directory);
+      Files.createFile(filepath);
     } catch (FileAlreadyExistsException e) {
       throw new RuntimeException("Failed creating file '" + filepath + "'.  It already exists.", e);
     } catch (IOException e) {
