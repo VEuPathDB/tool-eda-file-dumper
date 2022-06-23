@@ -15,7 +15,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>11</java.version>
     <jackson.version>2.13.3</jackson.version>
-    <java.main.class>org.veupathdb.eda.dumper.Main</java.main.class>
+    <java.main.class>org.veupathdb.eda.binaryfiles.dumper.Main</java.main.class>
   </properties>
 
   <repositories>
