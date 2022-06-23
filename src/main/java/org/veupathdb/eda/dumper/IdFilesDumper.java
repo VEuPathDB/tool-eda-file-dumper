@@ -155,10 +155,7 @@ public class IdFilesDumper implements FilesDumper {
         if (parentIdMapRow.getIdIndex() != _currentParentAncestorRow.get(_idColumnIndex - 1))
           throw new RuntimeException("Unexpected parent idIndex");
       }
-    }
-    
+    }   
   }
-
-
 
 }

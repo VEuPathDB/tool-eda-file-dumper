@@ -90,10 +90,10 @@ public class BinaryFilesManager {
     return createFile(study, entity, "meta.json");   
   }
  
-  Path getDoneFile(Study study, Operation op) {
-    if (op == Operation.READ) return createDoneFile(study);
+  Path getDoneFile(Path directory, Operation op) {
+    if (op == Operation.WRITE) return createDoneFile(directory);
     
-    Path filepath = Path.of(getStudyDir(study).toString(), DONE_FILE_NAME);
+    Path filepath = Path.of(directory.toString(), DONE_FILE_NAME);
     if (!Files.exists(filepath)) throw new RuntimeException("File '" + filepath + "' does not exist");
     return filepath;
   }
@@ -161,11 +161,11 @@ public class BinaryFilesManager {
     return studyDir;
   }
 
-  private Path createDoneFile(Study study) {
-    Path filepath = Path.of(getStudyDir(study).toString(), DONE_FILE_NAME);
-    LOG.info("Creating file: " + filepath);
+  private Path createDoneFile(Path directory) {
+    Path filepath = Path.of(directory.toString(), DONE_FILE_NAME);
+    LOG.info("Creating file: " + directory);
     try {
-      Files.createFile(filepath);
+      Files.createFile(directory);
     } catch (FileAlreadyExistsException e) {
       throw new RuntimeException("Failed creating file '" + filepath + "'.  It already exists.", e);
     } catch (IOException e) {

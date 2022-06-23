@@ -42,7 +42,7 @@ public class StudyDumper {
     
     // Root study gets a special IDs file dumper (doesn't need parent ancestors)
     dumpSubtree(entityTree, () -> new IdFilesDumperForRoot(_bfm, _study, rootEntity));
-    writeDoneFile();
+    writeDoneFile(_bfm.getStudyDir(_study, Operation.READ));
   }
 
   private void dumpSubtree(TreeNode<Entity> subTree, Supplier<FilesDumper> idsDumperSupplier) {
@@ -79,6 +79,7 @@ public class StudyDumper {
     }   
     
     writeMetaJsonFile(metaJson, entity);
+    writeDoneFile(_bfm.getEntityDir(_study, entity, Operation.READ));
   }
 
   private void handleResult(DataSource ds, Study study, Entity entity, Optional<Variable> variable, Supplier<FilesDumper> dumperSupplier) {
@@ -100,8 +101,9 @@ public class StudyDumper {
     }   
   }
   
-  private void writeDoneFile() {
-    try (FileWriter writer = new FileWriter(_bfm.getDoneFile(_study, Operation.WRITE).toFile())) {
+  private void writeDoneFile(Path directory) {
+    try (FileWriter writer = 
+        new FileWriter(_bfm.getDoneFile(directory, Operation.WRITE).toFile())) {
       writer.write("");
       writer.flush();
     } catch (IOException e) {
