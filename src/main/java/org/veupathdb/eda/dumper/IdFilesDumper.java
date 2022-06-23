@@ -100,7 +100,7 @@ public class IdFilesDumper implements FilesDumper {
     _idMapWriter.writeValue(idMap);
         
     // write out ancestors row
-    advanceParentStreams(row.get(_parentIdColumnIndex));
+    _parentAncestorReader.ifPresent(value -> advanceParentStreams(row.get(_parentIdColumnIndex)));
     List<Long> ancestorsRow = new ArrayList<Long>(_currentParentAncestorRow);
     ancestorsRow.add(curIdIndex);
     _ancestorsWriter.writeValue(ancestorsRow);
@@ -143,18 +143,15 @@ public class IdFilesDumper implements FilesDumper {
           .orElseThrow(() -> new RuntimeException("Unexpected end of parent id map file"));
       _currentParentIdString = parentIdMapRow.getValue();
       
-      // there is probably a fancier way to do this with Optional
-      if (_parentAncestorReader.isPresent()) {
-        // remember current parent ancestor row
-        _currentParentAncestorRow = _parentAncestorReader.get().next().map(_parentAncestorConverter::fromBytes)
-            .orElseThrow(() -> new RuntimeException("Unexpected end of parent ancestors file"));
+      // remember current parent ancestor row
+      _currentParentAncestorRow = _parentAncestorReader.get().next().map(_parentAncestorConverter::fromBytes)
+          .orElseThrow(() -> new RuntimeException("Unexpected end of parent ancestors file"));
 
-        // validate, for the heck of it
-        if (_currentParentAncestorRow.size() == _idColumnIndex)
-          throw new RuntimeException("Unexpected parent ancestor row size: " + _currentParentAncestorRow.size());
-        if (parentIdMapRow.getIdIndex() != _currentParentAncestorRow.get(_idColumnIndex - 1))
-          throw new RuntimeException("Unexpected parent idIndex");
-      }
+      // validate, for the heck of it
+      if (_currentParentAncestorRow.size() == _idColumnIndex)
+        throw new RuntimeException("Unexpected parent ancestor row size: " + _currentParentAncestorRow.size());
+      if (parentIdMapRow.getIdIndex() != _currentParentAncestorRow.get(_idColumnIndex - 1))
+        throw new RuntimeException("Unexpected parent idIndex");
     }   
   }
 
