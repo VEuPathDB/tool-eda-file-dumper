@@ -101,10 +101,8 @@ public class IdFilesDumper implements FilesDumper {
     VariableValueIdPair<String> idMap = new VariableValueIdPair<>(curIdIndex, curStringId);
     _idMapWriter.writeValue(idMap);
         
-    // only need to advance parent streams if parent has ancestors
-    _parentAncestorReader.ifPresent(value -> advanceParentStreams(row.get(_parentIdColumnIndex)));
-
    // write out ancestors row
+   advanceParentStreams(row.get(_parentIdColumnIndex));
    List<Long> ancestorsRow = new ArrayList<Long>(_currentParentAncestorRow);
     ancestorsRow.add(curIdIndex);
     _ancestorsWriter.writeValue(ancestorsRow);
@@ -148,11 +146,17 @@ public class IdFilesDumper implements FilesDumper {
       _currentParentIdString = parentIdMapRow.getValue();
       
       // remember current parent ancestor row
+      // if parent does have ancestors, read its ancestor file
+      // otherwise fake it by creating a row with just the parent's idIndex
+      if (_parentAncestorReader.isPresent()) {
       _currentParentAncestorRow = _parentAncestorReader.get().next().map(_parentAncestorConverter::fromBytes)
           .orElseThrow(() -> new RuntimeException("Unexpected end of parent ancestors file"));
+      } else {
+        _currentParentAncestorRow.set(0, parentIdMapRow.getIdIndex());
+      }
 
       // validate, for the heck of it
-      if (_currentParentAncestorRow.size() == _idColumnIndex)
+      if (_currentParentAncestorRow.size() != _idColumnIndex)
         throw new RuntimeException("Unexpected parent ancestor row size: " + _currentParentAncestorRow.size());
       if (parentIdMapRow.getIdIndex() != _currentParentAncestorRow.get(_idColumnIndex - 1))
         throw new RuntimeException("Unexpected parent idIndex");
