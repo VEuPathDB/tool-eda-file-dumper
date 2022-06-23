@@ -157,9 +157,7 @@ public class IdFilesDumper implements FilesDumper {
       }
 
       // validate, for the heck of it
-      if (_currentParentAncestorRow.size() != ID_COLUMN_INDEX)
-        throw new RuntimeException("Unexpected parent ancestor row size: " + _currentParentAncestorRow.size());
-      if (parentIdMapRow.getIdIndex() != _currentParentAncestorRow.get(ID_COLUMN_INDEX - 1))
+      if (parentIdMapRow.getIdIndex() != _currentParentAncestorRow.get(ID_COLUMN_INDEX))
         throw new RuntimeException("Unexpected parent idIndex");
     }   
   }
