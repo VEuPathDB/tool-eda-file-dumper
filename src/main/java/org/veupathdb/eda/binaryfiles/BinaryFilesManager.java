@@ -1,4 +1,4 @@
-package org.veupathdb.eda.dumper;
+package org.veupathdb.eda.binaryfiles;
 
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
@@ -22,10 +22,10 @@ public class BinaryFilesManager {
   private static final String VAR_FILE_PREFIX = "var_";
   private static final String VOCAB_FILE_PREFIX = "vocab_";
   
-  static final String META_KEY_NUM_ANCESTORS = "numAncestors";
+  public static final String META_KEY_NUM_ANCESTORS = "numAncestors";
   static final String DONE_FILE_NAME = "DONE";
   
-  enum Operation { READ, WRITE };
+  public enum Operation { READ, WRITE };
 
   private static final Logger LOG = LogManager.getLogger(BinaryFilesManager.class);
 
@@ -47,7 +47,7 @@ public class BinaryFilesManager {
     _studiesDirectory = studiesDirectory;
   }
   
-  Path getStudyDir(Study study, Operation op) {
+  public Path getStudyDir(Study study, Operation op) {
     if (op == Operation.READ) return getStudyDir(study);
     else {
       Path studyDir = Path.of(_studiesDirectory.toString(), getStudyDirName(study));
@@ -56,7 +56,7 @@ public class BinaryFilesManager {
     }
   }
 
-  Path getEntityDir(Study study, Entity entity, Operation op) {
+  public Path getEntityDir(Study study, Entity entity, Operation op) {
     if (op == Operation.READ) return getEntityDir(study, entity);
     else {
       Path entityDir = Path.of(_studiesDirectory.toString(), getStudyDir(study).getFileName().toString(), getEntityDirName(entity));
@@ -65,17 +65,17 @@ public class BinaryFilesManager {
     }
   }
   
-  Path getAncestorFile(Study study, Entity entity, Operation op) {
+  public Path getAncestorFile(Study study, Entity entity, Operation op) {
     if (op == Operation.READ) return getFile(study, entity, ANCESTORS_FILE_NAME);
     return createFile(study, entity, ANCESTORS_FILE_NAME);
   }
 
-  Path getIdMapFile(Study study, Entity entity, Operation op) {
+  public Path getIdMapFile(Study study, Entity entity, Operation op) {
     if (op == Operation.READ) return getFile(study, entity, IDS_MAP_FILE_NAME);
     return createFile(study, entity, IDS_MAP_FILE_NAME);
   }
   
-  Path getVariableFile(Study study, Entity entity, Variable var, Operation op) {
+  public Path getVariableFile(Study study, Entity entity, Variable var, Operation op) {
     if (op == Operation.READ) return getFile(study, entity, getVarFileName(var));
     return createFile(study, entity, getVarFileName(var));
   }
@@ -85,12 +85,12 @@ public class BinaryFilesManager {
     return createFile(study, entity, getVocabFileName(var));
   }
   
-  Path getMetaJsonFile(Study study, Entity entity, Operation op) {
+  public Path getMetaJsonFile(Study study, Entity entity, Operation op) {
     if (op == Operation.READ) return getFile(study, entity, "meta.json");   
     return createFile(study, entity, "meta.json");   
   }
  
-  Path getDoneFile(Path directory, Operation op) {
+  public Path getDoneFile(Path directory, Operation op) {
     if (op == Operation.WRITE) return createDoneFile(directory);
     
     Path filepath = Path.of(directory.toString(), DONE_FILE_NAME);

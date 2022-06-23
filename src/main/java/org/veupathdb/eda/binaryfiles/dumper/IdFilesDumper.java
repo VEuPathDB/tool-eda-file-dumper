@@ -1,4 +1,4 @@
-package org.veupathdb.eda.dumper;
+package org.veupathdb.eda.binaryfiles.dumper;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -12,7 +12,9 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.gusdb.fgputil.DualBufferBinaryRecordReader;
-import org.veupathdb.eda.dumper.BinaryFilesManager.Operation;
+import org.veupathdb.eda.binaryfiles.BinaryFilesManager;
+import org.veupathdb.eda.binaryfiles.BinaryValueWriter;
+import org.veupathdb.eda.binaryfiles.BinaryFilesManager.Operation;
 import org.veupathdb.service.eda.ss.model.Entity;
 import org.veupathdb.service.eda.ss.model.Study;
 import org.veupathdb.service.eda.ss.model.variable.VariableValueIdPair;
@@ -99,9 +101,11 @@ public class IdFilesDumper implements FilesDumper {
     VariableValueIdPair<String> idMap = new VariableValueIdPair<>(curIdIndex, curStringId);
     _idMapWriter.writeValue(idMap);
         
-    // write out ancestors row
+    // only need to advance parent streams if parent has ancestors
     _parentAncestorReader.ifPresent(value -> advanceParentStreams(row.get(_parentIdColumnIndex)));
-    List<Long> ancestorsRow = new ArrayList<Long>(_currentParentAncestorRow);
+
+   // write out ancestors row
+   List<Long> ancestorsRow = new ArrayList<Long>(_currentParentAncestorRow);
     ancestorsRow.add(curIdIndex);
     _ancestorsWriter.writeValue(ancestorsRow);
   }

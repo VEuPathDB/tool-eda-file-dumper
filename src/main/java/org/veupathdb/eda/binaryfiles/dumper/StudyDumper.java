@@ -1,4 +1,4 @@
-package org.veupathdb.eda.dumper;
+package org.veupathdb.eda.binaryfiles.dumper;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -12,7 +12,8 @@ import javax.sql.DataSource;
 
 import org.gusdb.fgputil.functional.TreeNode;
 import org.json.JSONObject;
-import org.veupathdb.eda.dumper.BinaryFilesManager.Operation;
+import org.veupathdb.eda.binaryfiles.BinaryFilesManager;
+import org.veupathdb.eda.binaryfiles.BinaryFilesManager.Operation;
 import org.veupathdb.service.eda.ss.model.Entity;
 import org.veupathdb.service.eda.ss.model.Study;
 import org.veupathdb.service.eda.ss.model.db.FilteredResultFactory;

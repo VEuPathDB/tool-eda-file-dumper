@@ -1,4 +1,4 @@
-package org.veupathdb.eda.dumper;
+package org.veupathdb.eda.binaryfiles;
 
 import org.veupathdb.service.eda.ss.model.variable.binary.BinarySerializer;
 

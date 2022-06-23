@@ -1,4 +1,4 @@
-package org.veupathdb.eda.dumper;
+package org.veupathdb.eda.binaryfiles.dumper;
 
 import static org.gusdb.fgputil.runtime.Environment.getRequiredVar;
 

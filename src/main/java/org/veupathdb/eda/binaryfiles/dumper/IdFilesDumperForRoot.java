@@ -1,10 +1,12 @@
-package org.veupathdb.eda.dumper;
+package org.veupathdb.eda.binaryfiles.dumper;
 
 import java.io.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.veupathdb.eda.dumper.BinaryFilesManager.Operation;
+import org.veupathdb.eda.binaryfiles.BinaryFilesManager;
+import org.veupathdb.eda.binaryfiles.BinaryValueWriter;
+import org.veupathdb.eda.binaryfiles.BinaryFilesManager.Operation;
 import org.veupathdb.service.eda.ss.model.Entity;
 import org.veupathdb.service.eda.ss.model.Study;
 import org.veupathdb.service.eda.ss.model.variable.VariableValueIdPair;

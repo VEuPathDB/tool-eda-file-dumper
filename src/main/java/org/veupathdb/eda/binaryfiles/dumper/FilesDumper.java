@@ -1,10 +1,12 @@
-package org.veupathdb.eda.dumper;
+package org.veupathdb.eda.binaryfiles.dumper;
 
 import java.io.BufferedOutputStream;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 
+import org.veupathdb.eda.binaryfiles.BinaryValueWriter;
 import org.veupathdb.service.eda.ss.model.tabular.TabularResponses.ResultConsumer;
 import org.veupathdb.service.eda.ss.model.variable.VariableValueIdPair;
 import org.veupathdb.service.eda.ss.model.variable.binary.BinarySerializer;
