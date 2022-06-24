@@ -27,13 +27,13 @@ public class StudyDumper {
   private final Path _studiesDirectory;
   private final String _appDbSchema;
   private final BinaryFilesManager _bfm;
+  
   public StudyDumper(DataSource dataSource, String appDbSchema, Path studiesDirectory, Study study) {
     _dataSource = dataSource;
     _appDbSchema = appDbSchema;
     _studiesDirectory = studiesDirectory;
     _study = study;
     _bfm = new BinaryFilesManager(_studiesDirectory);
-
   }
   
   public void dumpStudy() {
@@ -42,7 +42,7 @@ public class StudyDumper {
     Entity rootEntity = entityTree.getContents();
     
     // Root study gets a special IDs file dumper (doesn't need parent ancestors)
-    dumpSubtree(entityTree, () -> new IdFilesDumperForRoot(_bfm, _study, rootEntity));
+    dumpSubtree(entityTree, () -> new IdFilesDumperNoAncestor(_bfm, _study, rootEntity));
     writeDoneFile(_bfm.getStudyDir(_study, Operation.READ));
   }
 
@@ -53,7 +53,7 @@ public class StudyDumper {
     
     for (TreeNode<Entity> child : subTree.getChildNodes()) {
       Entity childEntity = child.getContents();
-      dumpSubtree(child, () -> new IdFilesDumper(_bfm, _study, childEntity, entity));
+      dumpSubtree(child, () -> new IdFilesDumperMultiAncestor(_bfm, _study, childEntity, entity));
     }
   }
   

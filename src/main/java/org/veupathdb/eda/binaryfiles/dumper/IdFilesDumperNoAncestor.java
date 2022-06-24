@@ -21,12 +21,12 @@ import org.veupathdb.service.eda.ss.model.variable.binary.StringValueConverter;
  * @author sfischer
  *
  */
-public class IdFilesDumperForRoot implements FilesDumper {
+public class IdFilesDumperNoAncestor implements FilesDumper {
   private BinaryValueWriter<VariableValueIdPair<String>> _imfWriter;
   private AtomicLong _idIndex = new AtomicLong(0);
   boolean _firstRow = true;
 
-  public IdFilesDumperForRoot(BinaryFilesManager bfm, Study study, Entity entity) {
+  public IdFilesDumperNoAncestor(BinaryFilesManager bfm, Study study, Entity entity) {
     final File imf  = bfm.getIdMapFile(study, entity, Operation.WRITE).toFile();
     _imfWriter = getVarAndIdBinaryWriter(imf, new StringValueConverter(BYTES_RESERVED_FOR_ID_STRING));
   }
