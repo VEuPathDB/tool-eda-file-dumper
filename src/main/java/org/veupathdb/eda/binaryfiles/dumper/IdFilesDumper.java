@@ -104,8 +104,9 @@ public class IdFilesDumper implements FilesDumper {
         
    // write out ancestors row
    advanceParentStreams(row.get(PARENT_ID_COLUMN_INDEX));
-   List<Long> ancestorsRow = new ArrayList<Long>(_currentParentAncestorRow);
+   List<Long> ancestorsRow = new ArrayList<Long>();
     ancestorsRow.add(curIdIndex);
+    ancestorsRow.addAll(_currentParentAncestorRow);
     _ancestorsWriter.writeValue(ancestorsRow);
   }
   
@@ -157,8 +158,8 @@ public class IdFilesDumper implements FilesDumper {
       }
 
       // validate, for the heck of it
-      if (parentIdMapRow.getIdIndex() != _currentParentAncestorRow.get(ID_COLUMN_INDEX))
-        throw new RuntimeException("Unexpected parent idIndex");
+      if (!parentIdMapRow.getIdIndex().equals(_currentParentAncestorRow.get(ID_COLUMN_INDEX)))
+        throw new RuntimeException("Unexpected parent idIndex.  idMap: " + parentIdMapRow.getIdIndex() + " ancestor: " + _currentParentAncestorRow.get(ID_COLUMN_INDEX));
     }   
   }
 
