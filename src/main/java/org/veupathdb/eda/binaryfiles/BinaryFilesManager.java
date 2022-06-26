@@ -15,8 +15,8 @@ import org.veupathdb.service.eda.ss.model.variable.Variable;
 public class BinaryFilesManager {
   final Path _studiesDirectory;
   
-  private static final String ANCESTORS_FILE_NAME = "ancestors";
-  private static final String IDS_MAP_FILE_NAME = "ids_map";
+  public static final String ANCESTORS_FILE_NAME = "ancestors";
+  public static final String IDS_MAP_FILE_NAME = "ids_map";
   private static final String STUDY_FILE_PREFIX = "study_";
   private static final String ENTITY_FILE_PREFIX = "entity_";
   private static final String VAR_FILE_PREFIX = "var_";

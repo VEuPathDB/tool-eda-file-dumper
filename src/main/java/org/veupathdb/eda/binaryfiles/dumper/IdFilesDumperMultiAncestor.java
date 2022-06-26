@@ -56,7 +56,7 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
     _parentAncestorConverter = new ListConverter<>(new LongValueConverter(), entity.getAncestorEntities().size());
     _parentIdMapDeserializer = new ValueWithIdDeserializer<String>(new StringValueConverter(BYTES_RESERVED_FOR_ID_STRING));
     try {
-      // only need parent ancestor reader if parent has ancestors
+
       _parentAncestorReader =
           new DualBufferBinaryRecordReader(
               bfm.getAncestorFile(study, parentEntity, Operation.READ), 
