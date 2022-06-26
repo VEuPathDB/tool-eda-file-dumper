@@ -21,9 +21,9 @@ public class BinaryFilePrinter {
   
   private static final int RECORDS_PER_BUFFER = 100;
 
-  public static void printBinaryFile(Path binaryFile, File metajsonFile) {
+  public static void printBinaryFile(Path binaryFile, Path metajsonFile) {
     
-    JSONObject metajson = readMetaJsonFile(metajsonFile);
+    JSONObject metajson = readMetaJsonFile(metajsonFile.toFile());
   
     if (binaryFile.getFileName().equals(BinaryFilesManager.ANCESTORS_FILE_NAME)) printAncestorFile(binaryFile, metajson);
     else {

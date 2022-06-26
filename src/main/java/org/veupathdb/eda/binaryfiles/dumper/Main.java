@@ -10,6 +10,7 @@ import javax.sql.DataSource;
 import org.gusdb.fgputil.db.platform.SupportedPlatform;
 import org.gusdb.fgputil.db.pool.DatabaseInstance;
 import org.gusdb.fgputil.db.pool.SimpleDbConfig;
+import org.veupathdb.eda.binaryfiles.printer.BinaryFilePrinter;
 import org.veupathdb.service.eda.ss.model.Study;
 import org.veupathdb.service.eda.ss.model.StudyOverview;
 import org.veupathdb.service.eda.ss.model.db.StudyFactory;
@@ -25,6 +26,20 @@ public class Main {
       System.err.println("USAGE: dumpFiles <studyId> <parentDirectory>");
       System.exit(1);
     }
+    
+    if (args[1].equals("meta.json")) {
+      Path binaryFilePath = Paths.get(args[0]);
+      if (!Files.exists(binaryFilePath)) {
+        throw new IllegalArgumentException(binaryFilePath.toAbsolutePath() + " does not exist.");
+      }
+      Path metajsonPath = Paths.get(args[1]);
+      if (!Files.exists(metajsonPath)) {
+        throw new IllegalArgumentException(metajsonPath.toAbsolutePath() + " does not exist.");
+      }
+      
+      BinaryFilePrinter.printBinaryFile(binaryFilePath, metajsonPath);
+      return;
+    } 
 
     String studyId = args[0];
     Path studiesDirectory = Paths.get(args[1]);
