@@ -27,7 +27,8 @@ public class Main {
       System.exit(1);
     }
     
-    if (args[1].equals("meta.json")) {
+    // temporary hack to call printer
+    if (Paths.get(args[1]).toFile().getName().equals("meta.json")) {
       Path binaryFilePath = Paths.get(args[0]);
       if (!Files.exists(binaryFilePath)) {
         throw new IllegalArgumentException(binaryFilePath.toAbsolutePath() + " does not exist.");
@@ -63,7 +64,6 @@ public class Main {
       
       StudyDumper studyDumper = new StudyDumper(ds, APP_DB_SCHEMA, studiesDirectory, study);
       studyDumper.dumpStudy();
-
 
     }
   }
