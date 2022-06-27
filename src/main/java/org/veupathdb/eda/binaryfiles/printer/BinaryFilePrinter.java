@@ -15,6 +15,9 @@ import org.veupathdb.service.eda.ss.model.variable.VariableType;
 import org.veupathdb.service.eda.ss.model.variable.binary.ListConverter;
 import org.veupathdb.service.eda.ss.model.variable.binary.LongValueConverter;
 
+/*
+ * Print to tab delimited text the contents of binary files produced by the eda binary file dumper.
+ */
 public class BinaryFilePrinter {
   
   private static final int RECORDS_PER_BUFFER = 100;
@@ -52,7 +55,7 @@ public class BinaryFilePrinter {
 
     int numAncestors = metajson.getInt(BinaryFilesManager.META_KEY_NUM_ANCESTORS);
 
-    ListConverter<Long> ancestorConverter = new ListConverter<>(new LongValueConverter(), numAncestors);
+    ListConverter<Long> ancestorConverter = new ListConverter<>(new LongValueConverter(), numAncestors + 1);
     
     try (DualBufferBinaryRecordReader ancestorReader = new DualBufferBinaryRecordReader(binaryFile,
                                                                                         ancestorConverter.numBytes(), RECORDS_PER_BUFFER)){
