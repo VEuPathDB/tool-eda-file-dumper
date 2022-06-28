@@ -1,0 +1,5 @@
+#!/bin/sh
+
+jarLoc="$(realpath $(dirname $0))/../target"
+
+java -classpath $jarLoc/executable.jar org.veupathdb.eda.binaryfiles.printer.BinaryFilePrinter $@

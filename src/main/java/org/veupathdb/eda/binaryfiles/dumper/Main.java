@@ -26,21 +26,6 @@ public class Main {
       System.err.println("USAGE: dumpFiles <studyId> <parentDirectory>");
       System.exit(1);
     }
-    
-    // temporary hack to call printer
-    if (Paths.get(args[1]).toFile().getName().equals("meta.json")) {
-      Path binaryFilePath = Paths.get(args[0]);
-      if (!Files.exists(binaryFilePath)) {
-        throw new IllegalArgumentException(binaryFilePath.toAbsolutePath() + " does not exist.");
-      }
-      Path metajsonPath = Paths.get(args[1]);
-      if (!Files.exists(metajsonPath)) {
-        throw new IllegalArgumentException(metajsonPath.toAbsolutePath() + " does not exist.");
-      }
-      
-      BinaryFilePrinter.printBinaryFile(binaryFilePath, metajsonPath);
-      return;
-    } 
 
     String studyId = args[0];
     Path studiesDirectory = Paths.get(args[1]);

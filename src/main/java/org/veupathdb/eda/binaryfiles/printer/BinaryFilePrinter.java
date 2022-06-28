@@ -3,6 +3,7 @@ package org.veupathdb.eda.binaryfiles.printer;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -81,6 +82,26 @@ public class BinaryFilePrinter {
   
   private static void printVarFile(Path binaryFile, VariableType type) {
     // TODO - fill in
+  }
+  
+  public static void main(String[] args) throws Exception {
+
+    if (args.length != 2) {
+      System.err.println("USAGE: binaryFileToText <binaryFile> <metajsonFile>");
+      System.exit(1);
+    }
+
+    Path binaryFilePath = Paths.get(args[0]);
+    Path metajsonPath = Paths.get(args[1]);
+
+    if (!Files.exists(binaryFilePath)) {
+      throw new IllegalArgumentException(binaryFilePath.toAbsolutePath() + " does not exist.");
+    }
+    if (!Files.exists(metajsonPath)) {
+      throw new IllegalArgumentException(metajsonPath.toAbsolutePath() + " does not exist.");
+    }
+
+    BinaryFilePrinter.printBinaryFile(binaryFilePath, metajsonPath);
   }
   
 }
