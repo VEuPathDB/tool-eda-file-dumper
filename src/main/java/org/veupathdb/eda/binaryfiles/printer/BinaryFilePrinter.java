@@ -12,9 +12,14 @@ import org.gusdb.fgputil.DualBufferBinaryRecordReader;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.veupathdb.eda.binaryfiles.BinaryFilesManager;
+import org.veupathdb.eda.binaryfiles.dumper.FilesDumper;
 import org.veupathdb.service.eda.ss.model.variable.VariableType;
+import org.veupathdb.service.eda.ss.model.variable.VariableValueIdPair;
+import org.veupathdb.service.eda.ss.model.variable.binary.BinaryConverter;
 import org.veupathdb.service.eda.ss.model.variable.binary.ListConverter;
 import org.veupathdb.service.eda.ss.model.variable.binary.LongValueConverter;
+import org.veupathdb.service.eda.ss.model.variable.binary.StringValueConverter;
+import org.veupathdb.service.eda.ss.model.variable.binary.ValueWithIdDeserializer;
 
 /*
  * Print to tab delimited text the contents of binary files produced by the eda binary file dumper.
@@ -26,13 +31,17 @@ public class BinaryFilePrinter {
   public static void printBinaryFile(Path binaryFile, Path metajsonFile) {
     
     JSONObject metajson = readMetaJsonFile(metajsonFile);
+    String binaryFileNm = binaryFile.toFile().getName();
 
-    if (binaryFile.getFileName().toString().equals(BinaryFilesManager.ANCESTORS_FILE_NAME)) printAncestorFile(binaryFile, metajson);
+    if (binaryFileNm.equals(BinaryFilesManager.ANCESTORS_FILE_NAME)) 
+      printAncestorFile(binaryFile, metajson);
+    
     else {
-      VariableType type = VariableType.STRING;  // assume idMap file
-      if (!binaryFile.getFileName().equals(BinaryFilesManager.IDS_MAP_FILE_NAME))
-        type = getVarType(binaryFile.toFile().getName(), metajson);
-      printVarFile(binaryFile, type);
+      BinaryConverter<?> converter = new StringValueConverter(FilesDumper.BYTES_RESERVED_FOR_ID_STRING); // assume converter for id_map file
+      if (!binaryFileNm.equals(BinaryFilesManager.IDS_MAP_FILE_NAME)) 
+        converter = getVarType(binaryFileNm, metajson).getConverterSupplier().get();     
+ 
+      printVarFile(binaryFile, converter);
     }
   }
   
@@ -47,9 +56,9 @@ public class BinaryFilePrinter {
     }
   }
   
-  private static VariableType getVarType(String fileName, JSONObject metajson) {
-    // TODO - fill in this method
-    return null;
+  private static VariableType getVarType(String fileBaseName, JSONObject metajson) {
+    if (!metajson.has(fileBaseName)) throw new RuntimeException("Meta json file does not contain key: " + fileBaseName);
+    return VariableType.fromString(metajson.getString(fileBaseName));
   }
   
   private static void printAncestorFile(Path binaryFile, JSONObject metajson) {
@@ -80,10 +89,30 @@ public class BinaryFilePrinter {
     }
   }    
   
-  private static void printVarFile(Path binaryFile, VariableType type) {
-    // TODO - fill in
+  private static void printVarFile(Path binaryFile, BinaryConverter<?> converter) {
+
+    ValueWithIdDeserializer<?> varDeserializer = new ValueWithIdDeserializer<>(converter);
+    
+    try (DualBufferBinaryRecordReader varReader = new DualBufferBinaryRecordReader(binaryFile,
+        varDeserializer.numBytes(), RECORDS_PER_BUFFER)){
+
+        while (true) {
+          Optional<byte[]> varRowBytes = varReader.next();
+          if (varRowBytes.isEmpty())
+            break;
+          VariableValueIdPair<?> varRow = varRowBytes.map(varDeserializer::fromBytes)
+            .orElseThrow(() -> new RuntimeException("Unexpected end of variables file"));
+
+          String text = varRow.getIdIndex().toString() + "\t" + varRow.getValue().toString();        
+          System.out.println(text);
+        }
+
+      } catch (IOException e) {
+      throw new RuntimeException("Failed attempting to read file " + binaryFile.toString(), e);
+    }
+
   }
-  
+    
   public static void main(String[] args) throws Exception {
 
     if (args.length != 2) {

@@ -10,7 +10,6 @@ import javax.sql.DataSource;
 import org.gusdb.fgputil.db.platform.SupportedPlatform;
 import org.gusdb.fgputil.db.pool.DatabaseInstance;
 import org.gusdb.fgputil.db.pool.SimpleDbConfig;
-import org.veupathdb.eda.binaryfiles.printer.BinaryFilePrinter;
 import org.veupathdb.service.eda.ss.model.Study;
 import org.veupathdb.service.eda.ss.model.StudyOverview;
 import org.veupathdb.service.eda.ss.model.db.StudyFactory;

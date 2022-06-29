@@ -79,7 +79,7 @@ public class StudyDumper {
       handleResult(_dataSource, _study, entity, Optional.of(valueVar), () -> new VariableFilesDumper<>(_bfm, _study, entity, valueVar));
 
       metaJson.put(_bfm.getVariableFile(_study, entity, variable, Operation.READ).getFileName().toString(), 
-                   valueVar.getType().name().toLowerCase());  // TODO - replace with getType().getTypeString() when available
+                   valueVar.getType().getTypeString()); 
     }   
     
     writeMetaJsonFile(metaJson, entity);
