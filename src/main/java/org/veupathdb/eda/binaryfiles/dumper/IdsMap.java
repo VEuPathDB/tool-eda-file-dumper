@@ -28,5 +28,11 @@ public class IdsMap {
   public List<String> getAncestorIds() {
     return ancestorIds;
   }
+
+  public boolean equals(IdsMap idsMap) {
+    return (idsMap.idIndex == idIndex 
+        && idsMap.entityId.equals(entityId)
+        && idsMap.ancestorIds.equals(ancestorIds));
+  }
   
 }
