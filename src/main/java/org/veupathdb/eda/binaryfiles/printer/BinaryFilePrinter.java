@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 import org.gusdb.fgputil.DualBufferBinaryRecordReader;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.veupathdb.eda.binaryfiles.BinaryFilesManager;
+import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager;
 import org.veupathdb.eda.binaryfiles.dumper.FilesDumper;
 import org.veupathdb.service.eda.ss.model.variable.VariableType;
 import org.veupathdb.service.eda.ss.model.variable.VariableValueIdPair;
@@ -103,7 +103,7 @@ public class BinaryFilePrinter {
           VariableValueIdPair<?> varRow = varRowBytes.map(varDeserializer::fromBytes)
             .orElseThrow(() -> new RuntimeException("Unexpected end of variables file"));
 
-          String text = varRow.getIdIndex().toString() + "\t" + varRow.getValue().toString();        
+          String text = String.valueOf(varRow.getIdIndex()) + "\t" + varRow.getValue().toString();        
           System.out.println(text);
         }
 

@@ -5,9 +5,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.veupathdb.eda.binaryfiles.BinaryFilesManager;
+import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager;
 import org.veupathdb.eda.binaryfiles.BinaryValueWriter;
-import org.veupathdb.eda.binaryfiles.BinaryFilesManager.Operation;
+import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager.Operation;
 import org.veupathdb.service.eda.ss.model.Entity;
 import org.veupathdb.service.eda.ss.model.Study;
 import org.veupathdb.service.eda.ss.model.variable.VariableValueIdPair;

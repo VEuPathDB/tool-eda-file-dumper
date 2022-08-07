@@ -12,8 +12,8 @@ import javax.sql.DataSource;
 
 import org.gusdb.fgputil.functional.TreeNode;
 import org.json.JSONObject;
-import org.veupathdb.eda.binaryfiles.BinaryFilesManager;
-import org.veupathdb.eda.binaryfiles.BinaryFilesManager.Operation;
+import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager;
+import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager.Operation;
 import org.veupathdb.service.eda.ss.model.Entity;
 import org.veupathdb.service.eda.ss.model.Study;
 import org.veupathdb.service.eda.ss.model.db.FilteredResultFactory;

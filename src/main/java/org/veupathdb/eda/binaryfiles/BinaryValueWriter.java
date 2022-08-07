@@ -10,9 +10,9 @@ public class BinaryValueWriter<T> implements AutoCloseable {
   private final OutputStream outputStream;
   private final BinarySerializer<T> binarySerializer;
 
-  public BinaryValueWriter(final OutputStream outputStream, final BinarySerializer<T> byteConverter) {
+  public BinaryValueWriter(final OutputStream outputStream, final BinarySerializer<T> byteSerializer) {
     this.outputStream = outputStream;
-    this.binarySerializer = byteConverter;
+    this.binarySerializer = byteSerializer;
   }
 
   public void writeValue(T variable) {
