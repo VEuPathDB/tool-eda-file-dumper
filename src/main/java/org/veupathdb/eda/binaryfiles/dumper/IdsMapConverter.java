@@ -45,7 +45,7 @@ public class IdsMapConverter implements BinarySerializer<IdsMap>, BinaryDeserial
   @Override
   public IdsMap fromBytes(byte[] bytes, int offset) {
     Long idIndex = idIndexConverter.fromBytes(bytes, offset);
-    offset += Long.SIZE;
+    offset += Long.BYTES;
     String entityId = idStringConverter.fromBytes(bytes, offset);
     List<String> ancestors = new ArrayList<String>();
     for (int i=0; i<numAncestors; i++) {

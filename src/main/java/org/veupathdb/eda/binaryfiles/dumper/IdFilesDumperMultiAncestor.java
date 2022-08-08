@@ -133,7 +133,7 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
 
       // validate, for the heck of it
       Long L = Long.valueOf(parentIdsMapRow.getIdIndex());
-      if (L.equals(_currentParentAncestorRow.get(ID_COLUMN_INDEX)))
+      if (!L.equals(_currentParentAncestorRow.get(ID_COLUMN_INDEX)))
         throw new RuntimeException("Unexpected parent idIndex.  idMap: " + parentIdsMapRow.getIdIndex() + " ancestor: " + _currentParentAncestorRow.get(ID_COLUMN_INDEX));
     }   
   }

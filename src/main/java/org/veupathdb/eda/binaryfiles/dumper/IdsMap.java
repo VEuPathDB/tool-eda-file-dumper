@@ -1,5 +1,6 @@
 package org.veupathdb.eda.binaryfiles.dumper;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * map of an entity's idIndex to its entity_id and its ancestor's entity_ids
@@ -29,10 +30,18 @@ public class IdsMap {
     return ancestorIds;
   }
 
-  public boolean equals(IdsMap idsMap) {
+  @Override
+  public boolean equals(Object object) {
+    if (!(object instanceof IdsMap)) return false;
+    IdsMap idsMap = (IdsMap)object;
     return (idsMap.idIndex == idIndex 
         && idsMap.entityId.equals(entityId)
-        && idsMap.ancestorIds.equals(ancestorIds));
+        && Objects.equals(idsMap.ancestorIds, ancestorIds));
+  }
+  
+  @Override
+  public String toString() {
+    return "idIndex: " + idIndex + " entityId: " + entityId + " ancestorIds: " + String.join(", ", ancestorIds);
   }
   
 }

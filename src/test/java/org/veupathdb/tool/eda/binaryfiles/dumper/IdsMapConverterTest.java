@@ -15,6 +15,8 @@ public class IdsMapConverterTest {
     List<String> ancestorIds = List.of("Ma", "GrandMa");
     IdsMap idsMap = new IdsMap(3L, "Me", ancestorIds);
     byte[] bytes = idsMapConverter.toBytes(idsMap);
-    Assertions.assertEquals(idsMap, idsMapConverter.fromBytes(bytes));
+    IdsMap converted = idsMapConverter.fromBytes(bytes);
+    
+    Assertions.assertTrue(idsMap.equals(converted), "Original: " + idsMap + " Converted: " + converted);
   }
 }
