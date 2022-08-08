@@ -1,6 +1,5 @@
 package org.veupathdb.eda.binaryfiles.dumper;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,10 +12,8 @@ import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager.Ope
 import org.veupathdb.service.eda.ss.model.Entity;
 import org.veupathdb.service.eda.ss.model.Study;
 import org.veupathdb.service.eda.ss.model.variable.VariableValueIdPair;
-import org.veupathdb.service.eda.ss.model.variable.binary.LongValueConverter;
 import org.veupathdb.service.eda.ss.model.variable.binary.StringValueConverter;
 import org.veupathdb.service.eda.ss.model.variable.binary.ValueWithIdDeserializer;
-import org.veupathdb.service.eda.ss.model.variable.binary.ListConverter;
 
 /**
  * Dump ID files for an entity that has exactly one ancestor
@@ -38,7 +35,7 @@ public class IdFilesDumperOneAncestor implements FilesDumper {
 
   private final ValueWithIdDeserializer<String> _parentIdMapDeserializer;
   private final DualBufferBinaryRecordReader _parentIdMapReader;
-  private final BinaryValueWriter<VariableValueIdPair<String>> _idMapWriter;
+  private final BinaryValueWriter<IdsMap> _idsMapWriter;
   private final BinaryValueWriter<List<Long>> _ancestorsWriter;
   boolean _firstRow = true;
   
@@ -61,24 +58,21 @@ public class IdFilesDumperOneAncestor implements FilesDumper {
     }
     
     // create writers
-    final File idMapFile  = bfm.getIdMapFile(study, entity, Operation.WRITE).toFile();
-    _idMapWriter = getVarAndIdBinaryWriter(idMapFile, new StringValueConverter(BYTES_RESERVED_FOR_ID_STRING));
-
-    final File idAncestorFile  = bfm.getAncestorFile(study, entity, Operation.WRITE).toFile();
-    _ancestorsWriter = getAncestorsWriter(idAncestorFile, 
-        new ListConverter<Long>(new LongValueConverter(), entity.getAncestorEntities().size() + 1));
+    _idsMapWriter = getIdsMapWriter(bfm, study, entity);
+    _ancestorsWriter = getAncestorsWriter(bfm, study, entity);
   }
-  
+    
   @Override
   public void consumeRow(List<String> row) throws IOException {
     if (_firstRow) { _firstRow = false; return; } // skip header
     
-    String curStringId = row.get(ID_COLUMN_INDEX);
     Long curIdIndex = _idIndex.getAndIncrement();
+    String curStringId = row.get(ID_COLUMN_INDEX);
+    List<String> ancestorIds = row.subList(1, row.size());
     
-    // write out idMap row
-    VariableValueIdPair<String> idMap = new VariableValueIdPair<>(curIdIndex, curStringId);
-    _idMapWriter.writeValue(idMap);
+    // write out ids_map file row
+    IdsMap idsMap = new IdsMap(curIdIndex, curStringId, ancestorIds);
+    _idsMapWriter.writeValue(idsMap);
         
    // write out ancestors row
    advanceParentStreams(row.get(PARENT_ID_COLUMN_INDEX));
@@ -91,7 +85,7 @@ public class IdFilesDumperOneAncestor implements FilesDumper {
   @Override
   public void close() throws Exception {
     _parentIdMapReader.close();
-    _idMapWriter.close();
+    _idsMapWriter.close();
     _ancestorsWriter.close();
   }
   

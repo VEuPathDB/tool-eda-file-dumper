@@ -1,33 +1,28 @@
 package org.veupathdb.eda.binaryfiles.dumper;
-
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.gusdb.fgputil.DualBufferBinaryRecordReader;
-import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager;
 import org.veupathdb.eda.binaryfiles.BinaryValueWriter;
-import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager.Operation;
 import org.veupathdb.service.eda.ss.model.Entity;
 import org.veupathdb.service.eda.ss.model.Study;
-import org.veupathdb.service.eda.ss.model.variable.VariableValueIdPair;
-import org.veupathdb.service.eda.ss.model.variable.binary.LongValueConverter;
-import org.veupathdb.service.eda.ss.model.variable.binary.StringValueConverter;
-import org.veupathdb.service.eda.ss.model.variable.binary.ValueWithIdDeserializer;
+import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager;
 import org.veupathdb.service.eda.ss.model.variable.binary.ListConverter;
+import org.veupathdb.service.eda.ss.model.variable.binary.LongValueConverter;
+import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager.Operation;
 
 /**
  * Dump ID files for an entity that has more than one ancestor
  * 
  * reads from:
  *  - tabular stream
- *  - parent idMap
- *  - parent ancestor
+ *  - parent ids_map  (needed to map parent entity_id to parent idIndex)
+ *  - parent ancestors
  * writes to
- *  - idMap
- *  - ancestor 
+ *  - ids_map   ([idIndex, entityId, ancestorIds])
+ *  - ancestors 
  *  
  * @author sfischer
  *
@@ -37,11 +32,11 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
   private final static int ID_COLUMN_INDEX = 0;  // the position in tabular stream of entity ID
   private final static int PARENT_ID_COLUMN_INDEX = 1; // the position in the tabular stream of the parent's ID
 
-  private final ListConverter<Long> _parentAncestorConverter;
-  private final ValueWithIdDeserializer<String> _parentIdMapDeserializer;
-  private final DualBufferBinaryRecordReader _parentAncestorReader;
-  private final DualBufferBinaryRecordReader _parentIdMapReader;
-  private final BinaryValueWriter<VariableValueIdPair<String>> _idMapWriter;
+  private final ListConverter<Long> _parentAncestorsDeserializer;
+  private final DualBufferBinaryRecordReader _parentAncestorsReader;
+  private final IdsMapConverter _parentIdsMapDeserializer;
+  private final DualBufferBinaryRecordReader _parentIdsMapReader;
+  private final BinaryValueWriter<IdsMap> _idsMapWriter;
   private final BinaryValueWriter<List<Long>> _ancestorsWriter;
   boolean _firstRow = true;
   
@@ -51,48 +46,53 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
   private AtomicLong _idIndex = new AtomicLong(0);
 
   public IdFilesDumperMultiAncestor(BinaryFilesManager bfm, Study study, Entity entity, Entity parentEntity) {
+    
+    int entityAncestorsCount = entity.getAncestorEntities().size();
+    int parentEntityAncestorsCount = parentEntity.getAncestorEntities().size();
+    
+    if (entityAncestorsCount < 1) 
+      throw new IllegalArgumentException("Entity must have at least one ancestor.");
+    if (parentEntityAncestorsCount != entityAncestorsCount-1)
+      throw new IllegalArgumentException("Parent entity must have one fewer ancestors than entity.");
 
     // create input readers
-    _parentAncestorConverter = new ListConverter<>(new LongValueConverter(), entity.getAncestorEntities().size());
-    _parentIdMapDeserializer = new ValueWithIdDeserializer<String>(new StringValueConverter(BYTES_RESERVED_FOR_ID_STRING));
+    _parentAncestorsDeserializer = new ListConverter<>(new LongValueConverter(), entity.getAncestorEntities().size());
+    _parentIdsMapDeserializer = new IdsMapConverter(parentEntityAncestorsCount);
     try {
-
-      _parentAncestorReader =
+      
+      _parentAncestorsReader =
           new DualBufferBinaryRecordReader(
               bfm.getAncestorFile(study, parentEntity, Operation.READ), 
-              _parentAncestorConverter.numBytes(), 
+              _parentAncestorsDeserializer.numBytes(), 
               RECORDS_PER_BUFFER);
-
-      _parentIdMapReader = 
+      
+      _parentIdsMapReader = 
           new DualBufferBinaryRecordReader(
               bfm.getIdMapFile(study, parentEntity, Operation.READ), 
-              _parentIdMapDeserializer.numBytes(), 
+              _parentIdsMapDeserializer.numBytes(), 
               RECORDS_PER_BUFFER);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
     
     // create writers
-    final File idMapFile  = bfm.getIdMapFile(study, entity, Operation.WRITE).toFile();
-    _idMapWriter = getVarAndIdBinaryWriter(idMapFile, new StringValueConverter(BYTES_RESERVED_FOR_ID_STRING));
-
-    final File idAncestorFile  = bfm.getAncestorFile(study, entity, Operation.WRITE).toFile();
-    _ancestorsWriter = getAncestorsWriter(idAncestorFile, 
-        new ListConverter<Long>(new LongValueConverter(), entity.getAncestorEntities().size() + 1));
+    _idsMapWriter = getIdsMapWriter(bfm, study, entity);    
+    _ancestorsWriter = getAncestorsWriter(bfm, study, entity);
   }
   
   @Override
   public void consumeRow(List<String> row) throws IOException {
     if (_firstRow) { _firstRow = false; return; } // skip header
     
-    String curStringId = row.get(ID_COLUMN_INDEX);
     Long curIdIndex = _idIndex.getAndIncrement();
+    String curStringId = row.get(ID_COLUMN_INDEX);
+    List<String> ancestorIds = row.subList(1, row.size());
     
-    // write out idMap row
-    VariableValueIdPair<String> idMap = new VariableValueIdPair<>(curIdIndex, curStringId);
-    _idMapWriter.writeValue(idMap);
+    // write out ids_map file row
+    IdsMap idsMap = new IdsMap(curIdIndex, curStringId, ancestorIds);
+    _idsMapWriter.writeValue(idsMap);
         
-   // write out ancestors row
+   // write out ancestors file row
    advanceParentStreams(row.get(PARENT_ID_COLUMN_INDEX));
    List<Long> ancestorsRow = new ArrayList<Long>();
     ancestorsRow.add(curIdIndex);
@@ -102,9 +102,9 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
   
   @Override
   public void close() throws Exception {
-    _parentAncestorReader.close();
-    _parentIdMapReader.close();
-    _idMapWriter.close();
+    _parentAncestorsReader.close();
+    _parentIdsMapReader.close();
+    _idsMapWriter.close();
     _ancestorsWriter.close();
   }
   
@@ -119,22 +119,22 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
     
     while (!parentIdString.equals(_currentParentIdString)) {
       
-      // remember current parent ID string
-      VariableValueIdPair<String> parentIdMapRow = 
-          _parentIdMapReader
+      // remember current parent ID string from parent ids_map file
+      IdsMap parentIdsMapRow = 
+          _parentIdsMapReader
           .next()
-          .map(_parentIdMapDeserializer::fromBytes)
-          .orElseThrow(() -> new RuntimeException("Unexpected end of parent id map file"));
-      _currentParentIdString = parentIdMapRow.getValue();
+          .map(_parentIdsMapDeserializer::fromBytes)
+          .orElseThrow(() -> new RuntimeException("Unexpected end of parent ids_map file"));
+      _currentParentIdString = parentIdsMapRow.getEntityId();
       
-      // remember current parent ancestor row
-      _currentParentAncestorRow = _parentAncestorReader.next().map(_parentAncestorConverter::fromBytes)
+      // remember current parent ancestor file row
+      _currentParentAncestorRow = _parentAncestorsReader.next().map(_parentAncestorsDeserializer::fromBytes)
           .orElseThrow(() -> new RuntimeException("Unexpected end of parent ancestors file"));
 
       // validate, for the heck of it
-      Long L = new Long(parentIdMapRow.getIdIndex());
+      Long L = Long.valueOf(parentIdsMapRow.getIdIndex());
       if (L.equals(_currentParentAncestorRow.get(ID_COLUMN_INDEX)))
-        throw new RuntimeException("Unexpected parent idIndex.  idMap: " + parentIdMapRow.getIdIndex() + " ancestor: " + _currentParentAncestorRow.get(ID_COLUMN_INDEX));
+        throw new RuntimeException("Unexpected parent idIndex.  idMap: " + parentIdsMapRow.getIdIndex() + " ancestor: " + _currentParentAncestorRow.get(ID_COLUMN_INDEX));
     }   
   }
 

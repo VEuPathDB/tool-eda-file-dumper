@@ -1,5 +1,4 @@
 package org.veupathdb.eda.binaryfiles.dumper;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +52,7 @@ public class IdsMapFileDumper implements FilesDumper {
     
     if (entityAncestorsCount < 1) 
       throw new IllegalArgumentException("Entity must have at least one ancestor.");
-    if (parentEntityAncestorsCount != entityAncestorsCount)
+    if (parentEntityAncestorsCount != entityAncestorsCount-1)
       throw new IllegalArgumentException("Parent entity must have one fewer ancestors than entity.");
 
     // create input readers
@@ -77,13 +76,8 @@ public class IdsMapFileDumper implements FilesDumper {
     }
     
     // create writers
-    final File idMapFile  = bfm.getIdMapFile(study, entity, Operation.WRITE).toFile();
-    IdsMapConverter idsMapSerializer = new IdsMapConverter(entityAncestorsCount);
-    _idsMapWriter = getIdsMapWriter(idMapFile, idsMapSerializer);
-    
-    final File ancestorsFile  = bfm.getAncestorFile(study, entity, Operation.WRITE).toFile();
-    _ancestorsWriter = getAncestorsWriter(ancestorsFile, 
-        new ListConverter<Long>(new LongValueConverter(), entityAncestorsCount + 1));
+    _idsMapWriter = getIdsMapWriter(bfm, study, entity);    
+    _ancestorsWriter = getAncestorsWriter(bfm, study, entity);
   }
   
   @Override

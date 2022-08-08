@@ -21,4 +21,4 @@ if [ "$error" = "true" ]; then
    exit 1
 fi
 
-mvn clean package --settings settings.xml
+mvn clean test package --settings settings.xml
