@@ -40,5 +40,13 @@ public interface FilesDumper extends ResultConsumer, AutoCloseable {
     }    
   }
 
-
+  default BinaryValueWriter<IdsMap> getIdsMapWriter(File file, IdsMapConverter converter) {
+    try {
+      final FileOutputStream outStream = new FileOutputStream(file);
+      final BufferedOutputStream bufStream = new BufferedOutputStream(outStream);
+      return new BinaryValueWriter<IdsMap>(bufStream, converter);
+    } catch (FileNotFoundException e) {
+      throw new RuntimeException(e);
+    }    
+  } 
 }
