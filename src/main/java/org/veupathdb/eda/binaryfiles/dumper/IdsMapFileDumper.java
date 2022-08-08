@@ -1,3 +1,4 @@
+package org.veupathdb.eda.binaryfiles.dumper;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -6,9 +7,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.gusdb.fgputil.DualBufferBinaryRecordReader;
 import org.veupathdb.eda.binaryfiles.BinaryValueWriter;
-import org.veupathdb.eda.binaryfiles.dumper.FilesDumper;
-import org.veupathdb.eda.binaryfiles.dumper.IdsMap;
-import org.veupathdb.eda.binaryfiles.dumper.IdsMapConverter;
 import org.veupathdb.service.eda.ss.model.Entity;
 import org.veupathdb.service.eda.ss.model.Study;
 import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager;

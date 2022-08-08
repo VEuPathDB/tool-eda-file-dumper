@@ -53,10 +53,7 @@ public class StudyDumper {
 
     for (TreeNode<Entity> child : subTree.getChildNodes()) {
       Entity childEntity = child.getContents();
-      dumpSubtree(child,
-         () -> childEntity.getAncestorEntities().size() == 1
-              ? new IdFilesDumperOneAncestor(_bfm, _study, childEntity, entity)
-              : new IdFilesDumperMultiAncestor(_bfm, _study, childEntity, entity));
+      dumpSubtree(child, () -> new IdsMapFileDumper(_bfm, _study, childEntity, entity));;
     }
   }
   
