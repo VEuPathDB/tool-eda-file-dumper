@@ -96,8 +96,8 @@ public class BinaryFilePrinter {
 
     IdsMapConverter converter = new IdsMapConverter(numAncestors);
     
-    try (DualBufferBinaryRecordReader reader = new DualBufferBinaryRecordReader(binaryFile,
-                                                                                        converter.numBytes(), RECORDS_PER_BUFFER)){
+    try (DualBufferBinaryRecordReader reader = 
+        new DualBufferBinaryRecordReader(binaryFile, converter.numBytes(), RECORDS_PER_BUFFER)){
 
         while (true) {
           Optional<byte[]> rowBytes = reader.next();

@@ -11,7 +11,7 @@ import java.util.List;
 
 public class IdsMapConverter implements BinarySerializer<IdsMap>, BinaryDeserializer<IdsMap> {
   
-  private int numAncestors;
+  private final int numAncestors;
   private StringValueConverter idStringConverter;
   private LongValueConverter idIndexConverter;
   
