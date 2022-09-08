@@ -32,7 +32,6 @@ public class VariableFilesDumper<T> implements FilesDumper {
   public void consumeRow(List<String> row) throws IOException {
     if (_firstRow) { _firstRow = false; return; } // skip header
 
-    // TODO MONDAY: BUG Was that this was happening too late and not actually being unconditionally incremented. Need to re-generate PROMO Data
     Long idIndex = _idIndex.getAndIncrement();              // unconditionally increment the id index
     if (row.get(_valColumnIndex).equals("")) return;        // but don't output missing data rows
 
