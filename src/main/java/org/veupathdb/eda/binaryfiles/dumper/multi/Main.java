@@ -23,9 +23,14 @@ public class Main {
 
   public static void main(String[] args) throws Exception {
     // read required environment vars
-    String connectionUrl = getRequiredVar("APP_DB_CONNECT");
-    String connectionUser = getRequiredVar("APP_DB_USER");
-    String connectionPassword = getRequiredVar("APP_DB_PASS");
+    String connectionUrl = getRequiredVar("APPDB_CONNECT");
+    String connectionUser = getRequiredVar("APPDB_USER");
+    String connectionPassword = getRequiredVar("APPDB_PASS");
+
+    if (args.length != 1) {
+      System.err.println("USAGE: dumpAllStudiesFiles <parentDirectory>");
+      System.exit(1);
+    }
 
     Path studiesDirectory = Paths.get(args[0]);
 
