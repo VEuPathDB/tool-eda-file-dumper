@@ -26,9 +26,9 @@ public class IdFilesDumperNoAncestor implements FilesDumper {
   private AtomicLong _idIndex = new AtomicLong(0);
   boolean _firstRow = true;
 
-  public IdFilesDumperNoAncestor(BinaryFilesManager bfm, Study study, Entity entity) {
+  public IdFilesDumperNoAncestor(BinaryFilesManager bfm, Study study, Entity entity, int bytesReservedForIdString) {
     final File imf  = bfm.getIdMapFile(study, entity, Operation.WRITE).toFile();
-    _imfWriter = getVarAndIdBinaryWriter(imf, new StringValueConverter(BYTES_RESERVED_FOR_ID_STRING));
+    _imfWriter = getVarAndIdBinaryWriter(imf, new StringValueConverter(bytesReservedForIdString));
   }
 
   @Override

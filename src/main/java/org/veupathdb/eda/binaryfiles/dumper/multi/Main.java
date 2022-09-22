@@ -15,6 +15,9 @@ import javax.sql.DataSource;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.gusdb.fgputil.runtime.Environment.getRequiredVar;
 
@@ -38,17 +41,40 @@ public class Main {
       throw new IllegalArgumentException(studiesDirectory.toAbsolutePath() + " is not a writable directory.");
     }
 
+    List<FailedStudy> failedStudies = new ArrayList<>();
+
     // instantiate a connection to the database
     try (DatabaseInstance appDb = new DatabaseInstance(SimpleDbConfig.create(
         SupportedPlatform.ORACLE, connectionUrl, connectionUser, connectionPassword))) {
 
       DataSource ds = appDb.getDataSource();
-      StudyFactory studyFactory = new StudyFactory(ds, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED, false);
+      StudyFactory studyFactory = new StudyFactory(ds, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED);
       for (StudyOverview studyOverview: studyFactory.getStudyOverviews()) {
         Study study = studyFactory.getStudyById(studyOverview.getStudyId());
-        StudyDumper studyDumper = new StudyDumper(ds, APP_DB_SCHEMA, studiesDirectory, study);
-        studyDumper.dumpStudy();
+        try {
+          StudyDumper studyDumper = new StudyDumper(ds, APP_DB_SCHEMA, studiesDirectory, study);
+          studyDumper.dumpStudy();
+        } catch (Exception e) {
+          failedStudies.add(new FailedStudy(e, studyOverview));
+        }
       }
+    }
+    if (!failedStudies.isEmpty()) {
+      final String commaSeparatedStudies = failedStudies.stream()
+          .map(study -> study.studyOverview.getStudyId())
+          .collect(Collectors.joining(","));
+      throw new RuntimeException("The following studies failed to be written: " + commaSeparatedStudies
+          + ". Attaching first failure stack trace: ", failedStudies.stream().findFirst().get().e);
+    }
+  }
+
+  public static class FailedStudy {
+    private Exception e;
+    private StudyOverview studyOverview;
+
+    public FailedStudy(Exception e, StudyOverview studyOverview) {
+      this.e = e;
+      this.studyOverview = studyOverview;
     }
   }
 }

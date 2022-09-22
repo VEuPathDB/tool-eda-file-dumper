@@ -3,15 +3,17 @@ package org.veupathdb.eda.binaryfiles.dumper;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
 
 import org.gusdb.fgputil.functional.TreeNode;
+import org.json.JSONArray;
 import org.json.JSONObject;
+import org.veupathdb.service.eda.ss.model.tabular.TabularHeaderFormat;
 import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager;
 import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager.Operation;
 import org.veupathdb.service.eda.ss.model.Entity;
@@ -42,33 +44,49 @@ public class StudyDumper {
     Entity rootEntity = entityTree.getContents();
     
     // Root study gets a special IDs file dumper (doesn't need parent ancestors)
-    dumpSubtree(entityTree, () -> new IdFilesDumperNoAncestor(_bfm, _study, rootEntity));
+    dumpSubtree(entityTree, new IdFilesDumperFactory(_bfm, _study, rootEntity, null), new HashMap<>());
     writeDoneFile(_bfm.getStudyDir(_study, Operation.READ));
   }
 
-  private void dumpSubtree(TreeNode<Entity> subTree, Supplier<FilesDumper> idsDumperSupplier) {
+  private void dumpSubtree(TreeNode<Entity> subTree, IdFilesDumperFactory idDumperFactory, Map<String, Integer> entityIdToMaxIdLength) {
     Entity entity = subTree.getContents();
-    
-    dumpEntity(entity, idsDumperSupplier);
+
+    // Find the maximum length of an ID for this entity to determine space to allocate for each ID.
+    // Add 4 to store the size of the ID as well.
+    int maxIdLength = scanForMaxIdLength(entity);
+
+    // Add the value to the Map so that it is available when dumping subtrees recursively.
+    Map<String, Integer> newMaxIdLengthMap = new HashMap(entityIdToMaxIdLength);
+    newMaxIdLengthMap.put(entity.getId(), maxIdLength);
+
+    dumpEntity(entity, idDumperFactory, newMaxIdLengthMap);
 
     for (TreeNode<Entity> child : subTree.getChildNodes()) {
-      Entity childEntity = child.getContents();
       dumpSubtree(child,
-          () -> childEntity.getAncestorEntities().size() == 1
-               ? new IdFilesDumperOneAncestor(_bfm, _study, childEntity, entity)
-               : new IdFilesDumperMultiAncestor(_bfm, _study, childEntity, entity));
+          new IdFilesDumperFactory(_bfm, _study, child.getContents(), entity),
+          newMaxIdLengthMap);
     }
   }
   
-  private void dumpEntity(Entity entity, Supplier<FilesDumper> idsDumperSupplier) {
+  private void dumpEntity(Entity entity, IdFilesDumperFactory idDumperFactory, Map<String, Integer> entityIdToMaxIdLength) {
     _bfm.getEntityDir(_study, entity, Operation.WRITE);
 
     // create an object that will track minor meta info about the files, sufficient to parse them into text
     JSONObject metaJson = new JSONObject();
-    metaJson.put(BinaryFilesManager.META_KEY_NUM_ANCESTORS, entity.getAncestorEntities().size());
-    
+
+    JSONArray ancestorsJson = new JSONArray();
+    // Order is important, should be written in the same order as the ancestorEntities array list.
+    for (Entity ancestor: entity.getAncestorEntities()) {
+      String ancestorEntityId = ancestor.getId();
+      ancestorsJson.put(entityIdToMaxIdLength.get(ancestorEntityId));
+    }
+
+    // TODO Pull these strings into BinaryFilesManager in lib-eda-subsetting
+    metaJson.put(BinaryFilesManager.META_KEY_BYTES_PER_ANCESTOR, ancestorsJson);
+    metaJson.put(BinaryFilesManager.META_KEY_BYTES_FOR_ID, entityIdToMaxIdLength.get(entity.getId()));
+
     // first select no variables to dump the ID and ancestors files
-    handleResult(_dataSource, _study, entity, Optional.empty(), idsDumperSupplier);
+    handleResult(_dataSource, _study, entity, Optional.empty(), () -> idDumperFactory.create(entityIdToMaxIdLength));
 
     // loop through variables, creating a file for each
     for (Variable variable : entity.getVariables()) {
@@ -86,8 +104,8 @@ public class StudyDumper {
     writeDoneFile(_bfm.getEntityDir(_study, entity, Operation.READ));
   }
 
-  private void handleResult(DataSource ds, Study study, Entity entity, Optional<Variable> variable, Supplier<FilesDumper> dumperSupplier) {
-    List<Variable> vars = variable.map(List::of).orElse(Collections.emptyList());
+  private void handleResult(DataSource ds, Study study, Entity entity, Optional<VariableWithValues> variable, Supplier<FilesDumper> dumperSupplier) {
+    List<VariableWithValues> vars = variable.map(List::of).orElse(Collections.emptyList());
     try (FilesDumper dumper = dumperSupplier.get()) {
       FilteredResultFactory.produceTabularSubset(ds, _appDbSchema, study, entity, vars, List.of(), new TabularReportConfig(), dumper);
     }
@@ -95,7 +113,21 @@ public class StudyDumper {
       throw new RuntimeException("Could not dump files for study " + study.getStudyId(), e);
     }
   }
-  
+
+  private int scanForMaxIdLength(Entity entity) {
+    try {
+      final TabularReportConfig reportConfig = new TabularReportConfig();
+      reportConfig.setHeaderFormat(TabularHeaderFormat.STANDARD);
+      final MaxIdLengthFinder maxIdLengthFinder = new MaxIdLengthFinder();
+      FilteredResultFactory.produceTabularSubset(_dataSource, _appDbSchema, _study, entity, List.of(), List.of(), new TabularReportConfig(), maxIdLengthFinder);
+      return maxIdLengthFinder.getMaxLength();
+    }
+    catch (Exception e) {
+      throw new RuntimeException("Could not dump files for study " + _study.getStudyId(), e);
+    }
+  }
+
+
   private void writeMetaJsonFile(JSONObject metaJson, Entity entity) {
     try (FileWriter writer = new FileWriter(_bfm.getMetaJsonFile(_study, entity, Operation.WRITE).toFile())) {
       writer.write(metaJson.toString(2));
