@@ -50,8 +50,8 @@ public class Main {
       DataSource ds = appDb.getDataSource();
       StudyFactory studyFactory = new StudyFactory(ds, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED);
       for (StudyOverview studyOverview: studyFactory.getStudyOverviews()) {
-        Study study = studyFactory.getStudyById(studyOverview.getStudyId());
         try {
+          Study study = studyFactory.getStudyById(studyOverview.getStudyId());
           StudyDumper studyDumper = new StudyDumper(ds, APP_DB_SCHEMA, studiesDirectory, study);
           studyDumper.dumpStudy();
         } catch (Exception e) {

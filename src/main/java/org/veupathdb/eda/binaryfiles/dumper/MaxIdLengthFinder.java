@@ -21,7 +21,6 @@ public class MaxIdLengthFinder implements TabularResponses.ResultConsumer {
 
     int numBytes = record.get(INDEX_OF_ID).getBytes(StandardCharsets.UTF_8).length + 4;
       if (numBytes > maxLength) {
-        System.out.println("Found max length string: " + numBytes + " , " + record.get(INDEX_OF_ID));
         maxLength = numBytes;
       }
   }
