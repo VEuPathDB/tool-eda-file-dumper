@@ -58,8 +58,6 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
     // create input readers
     _parentAncestorsDeserializer = new ListConverter<>(new LongValueConverter(), entity.getAncestorEntities().size());
     _parentIdValuesDeserializer = new RecordIdValuesConverter(parentEntity, bytesReservedByEntityId);
-    System.out.println("Bytes reserved by entity ID: " + bytesReservedByEntityId);
-    System.out.println("Ancestors: " + entity.getAncestorEntities().stream().map(Entity::getId).collect(Collectors.joining(",")));
     try {
       
       _parentAncestorsReader =

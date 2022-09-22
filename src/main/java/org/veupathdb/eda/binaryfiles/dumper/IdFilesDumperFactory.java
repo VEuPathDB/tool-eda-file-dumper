@@ -22,6 +22,10 @@ public class IdFilesDumperFactory {
     this.parentEntity = parentEntity;
   }
 
+  /**
+   * Supplies an implementation of an ID FilesDumper based on the number of ancestors of entity member and the
+   * byte count allocated for IDs in ancestry.
+   */
   public FilesDumper create(Map<String, Integer> bytesReservedForIdByEntityId) {
     if (entity.getAncestorEntities().size() == 1) {
       return new IdFilesDumperOneAncestor(bfm, study, entity, parentEntity, bytesReservedForIdByEntityId);

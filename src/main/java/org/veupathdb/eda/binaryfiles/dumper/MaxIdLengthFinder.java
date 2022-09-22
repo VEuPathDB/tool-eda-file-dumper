@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+/**
+ * ResultConsumer that tracks the longest ID. Returns the max length once the entire result has been consumed.
+ */
 public class MaxIdLengthFinder implements TabularResponses.ResultConsumer {
   private static final int INDEX_OF_ID = 0;
   private int maxLength = 0;
