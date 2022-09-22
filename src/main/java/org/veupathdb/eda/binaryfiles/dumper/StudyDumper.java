@@ -81,7 +81,6 @@ public class StudyDumper {
       ancestorsJson.put(entityIdToMaxIdLength.get(ancestorEntityId));
     }
 
-    // TODO Pull these strings into BinaryFilesManager in lib-eda-subsetting
     metaJson.put(BinaryFilesManager.META_KEY_BYTES_PER_ANCESTOR, ancestorsJson);
     metaJson.put(BinaryFilesManager.META_KEY_BYTES_FOR_ID, entityIdToMaxIdLength.get(entity.getId()));
 
