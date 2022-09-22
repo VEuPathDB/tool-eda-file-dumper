@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.json.JSONArray;
 import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager;
 import org.veupathdb.eda.binaryfiles.BinaryValueWriter;
 import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager.Operation;
@@ -33,18 +34,26 @@ public class VariableFilesDumper<T> implements FilesDumper {
 
     Long idIndex = _idIndex.getAndIncrement();              // unconditionally increment the id index
     if (row.get(_valColumnIndex).equals("")) return;        // but don't output missing data rows
-    
-    VariableValueIdPair<T> var = new VariableValueIdPair<T>(idIndex, extractValueFromRow(row));
-    _varFileWriter.writeValue(var);
+
+    if (_valueVar.getIsMultiValued()) {
+      writeMultiValue(row, idIndex);
+    } else {
+      writeSingleValue(row, idIndex);
+    }
   }
 
   @Override
   public void close() throws Exception {
     _varFileWriter.close();
   }
-  
-  private T extractValueFromRow(List<String> row) {
-    return _valueVar.fromString(row.get(_valColumnIndex)); 
+
+  private void writeMultiValue(List<String> row, Long idIndex) {
+    JSONArray values = new JSONArray(row.get(_valColumnIndex));
+    values.forEach(val -> _varFileWriter.writeValue(new VariableValueIdPair<>(idIndex,
+        _valueVar.fromString(val.toString()))));
   }
 
+  private void writeSingleValue(List<String> row, Long idIndex) {
+    _varFileWriter.writeValue(new VariableValueIdPair<>(idIndex, _valueVar.fromString(row.get(_valColumnIndex))));
+  }
 }

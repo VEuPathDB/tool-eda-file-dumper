@@ -8,13 +8,17 @@ This repo is templated from https://github.com/VEuPathDB/tool-java-maven-templat
 ```
 GITHUB_USERNAME
 GITHUB_TOKEN
-APP_DB_TNS_NAME
-APP_DB_USER
-APP_DB_PASS
+APPDB_TNS_NAME
+APPDB_USER
+APPDB_PASS
 ```
 
 # Usage
-Run the `dumpFiles` command with no arguments to see usage
+## Dump a single study
+Run the `dumpFiles` command with no arguments to see usage.
+
+## Dump all studies
+Run the `dumpAllStudiesFiles` command with no arguments to see usage.
 
 # File structure
 The file structure produced on output is controlled by link:src/main/java/org/veupathdb/eda/dumper/BinaryFilesManager.java[BinaryFilesManager.java]
