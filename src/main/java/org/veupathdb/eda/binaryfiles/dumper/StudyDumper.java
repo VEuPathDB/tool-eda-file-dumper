@@ -56,15 +56,14 @@ public class StudyDumper {
     int maxIdLength = scanForMaxIdLength(entity);
 
     // Add the value to the Map so that it is available when dumping subtrees recursively.
-    Map<String, Integer> newMaxIdLengthMap = new HashMap(entityIdToMaxIdLength);
-    newMaxIdLengthMap.put(entity.getId(), maxIdLength);
+    entityIdToMaxIdLength.put(entity.getId(), maxIdLength);
 
-    dumpEntity(entity, idDumperFactory, newMaxIdLengthMap);
+    dumpEntity(entity, idDumperFactory, entityIdToMaxIdLength);
 
     for (TreeNode<Entity> child : subTree.getChildNodes()) {
       dumpSubtree(child,
           new IdFilesDumperFactory(_bfm, _study, child.getContents(), entity),
-          newMaxIdLengthMap);
+          entityIdToMaxIdLength);
     }
   }
   

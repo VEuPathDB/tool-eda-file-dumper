@@ -19,7 +19,8 @@ public class MaxIdLengthFinder implements TabularResponses.ResultConsumer {
   public void consumeRow(List<String> record) throws IOException {
     if (firstRow) { firstRow = false; return; } // skip header
 
-    int numBytes = record.get(INDEX_OF_ID).getBytes(StandardCharsets.UTF_8).length + 4;
+    // Number of bytes equals bytes in string plus bytes needed to store string length.
+    int numBytes = record.get(INDEX_OF_ID).getBytes(StandardCharsets.UTF_8).length + Integer.BYTES;
       if (numBytes > maxLength) {
         maxLength = numBytes;
       }

@@ -27,12 +27,10 @@ public class IdFilesDumperFactory {
    * byte count allocated for IDs in ancestry.
    */
   public FilesDumper create(Map<String, Integer> bytesReservedForIdByEntityId) {
-    if (entity.getAncestorEntities().size() == 1) {
-      return new IdFilesDumperOneAncestor(bfm, study, entity, parentEntity, bytesReservedForIdByEntityId);
-    } else if (entity.getAncestorEntities().size() > 1) {
-      return new IdFilesDumperMultiAncestor(bfm, study, entity, parentEntity, bytesReservedForIdByEntityId);
-    } else { // No ancestors
-      return new IdFilesDumperNoAncestor(bfm, study, entity, bytesReservedForIdByEntityId.get(entity.getId()));
+    switch (entity.getAncestorEntities().size()) {
+      case 0: return new IdFilesDumperNoAncestor(bfm, study, entity, bytesReservedForIdByEntityId.get(entity.getId()));
+      case 1: return new IdFilesDumperOneAncestor(bfm, study, entity, parentEntity, bytesReservedForIdByEntityId);
+      default: return new IdFilesDumperMultiAncestor(bfm, study, entity, parentEntity, bytesReservedForIdByEntityId);
     }
   }
 }

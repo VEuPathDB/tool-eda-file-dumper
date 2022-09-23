@@ -84,8 +84,8 @@ public class BinaryFilePrinter {
   
   private static void printIdsMapFile(Path binaryFile, JSONObject metajson) {
     List<Integer> bytesReservedPerAncestors = new ArrayList<>();
-    int bytesReservedForId = metajson.getInt("bytesReservedForId");
-    JSONArray ancestorBytesReserved = metajson.getJSONArray("bytesReservedPerAncestor");
+    int bytesReservedForId = metajson.getInt(BinaryFilesManager.META_KEY_BYTES_FOR_ID);
+    JSONArray ancestorBytesReserved = metajson.getJSONArray(BinaryFilesManager.META_KEY_BYTES_PER_ANCESTOR);
     for (int i = 0; i < ancestorBytesReserved.length(); i++) {
       bytesReservedPerAncestors.add(ancestorBytesReserved.getInt(i));
     }

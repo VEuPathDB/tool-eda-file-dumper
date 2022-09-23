@@ -55,6 +55,7 @@ public class Main {
           StudyDumper studyDumper = new StudyDumper(ds, APP_DB_SCHEMA, studiesDirectory, study);
           studyDumper.dumpStudy();
         } catch (Exception e) {
+          e.printStackTrace();
           failedStudies.add(new FailedStudy(e, studyOverview));
         }
       }
