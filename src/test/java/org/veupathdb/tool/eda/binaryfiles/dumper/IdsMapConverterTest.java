@@ -2,8 +2,8 @@ package org.veupathdb.tool.eda.binaryfiles.dumper;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.veupathdb.eda.binaryfiles.dumper.IdsMap;
-import org.veupathdb.eda.binaryfiles.dumper.IdsMapConverter;
+import org.veupathdb.service.eda.ss.model.variable.binary.RecordIdValues;
+import org.veupathdb.service.eda.ss.model.variable.binary.RecordIdValuesConverter;
 
 import java.util.List;
 
@@ -11,11 +11,11 @@ public class IdsMapConverterTest {
 
   @Test
   public void testToAndFromBytes() {
-    IdsMapConverter idsMapConverter = new IdsMapConverter(2);
+    RecordIdValuesConverter idsMapConverter = new RecordIdValuesConverter(List.of(6, 11), 6);
     List<String> ancestorIds = List.of("Ma", "GrandMa");
-    IdsMap idsMap = new IdsMap(3L, "Me", ancestorIds);
+    RecordIdValues idsMap = new RecordIdValues(3L, "Me", ancestorIds);
     byte[] bytes = idsMapConverter.toBytes(idsMap);
-    IdsMap converted = idsMapConverter.fromBytes(bytes);
+    RecordIdValues converted = idsMapConverter.fromBytes(bytes);
     
     Assertions.assertTrue(idsMap.equals(converted), "Original: " + idsMap + " Converted: " + converted);
   }

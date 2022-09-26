@@ -4,23 +4,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.gusdb.fgputil.DualBufferBinaryRecordReader;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager;
-import org.veupathdb.eda.binaryfiles.dumper.IdsMap;
-import org.veupathdb.eda.binaryfiles.dumper.IdsMapConverter;
+import org.veupathdb.service.eda.ss.model.variable.binary.*;
 import org.veupathdb.service.eda.ss.model.variable.VariableType;
 import org.veupathdb.service.eda.ss.model.variable.VariableValueIdPair;
-import org.veupathdb.service.eda.ss.model.variable.binary.BinaryConverter;
-import org.veupathdb.service.eda.ss.model.variable.binary.ListConverter;
-import org.veupathdb.service.eda.ss.model.variable.binary.LongValueConverter;
-import org.veupathdb.service.eda.ss.model.variable.binary.ValueWithIdDeserializer;
 
 /*
  * Print to tab delimited text the contents of binary files produced by the eda binary file dumper.
@@ -61,10 +54,9 @@ public class BinaryFilePrinter {
     if (!metajson.has(fileBaseName)) throw new RuntimeException("Meta json file does not contain key: " + fileBaseName);
     return VariableType.fromString(metajson.getString(fileBaseName));
   }
-  
-  private static void printAncestorFile(Path binaryFile, JSONObject metajson) {
 
-    int numAncestors = metajson.getInt(BinaryFilesManager.META_KEY_NUM_ANCESTORS);
+  private static void printAncestorFile(Path binaryFile, JSONObject metajson) {
+    int numAncestors = metajson.getJSONArray(BinaryFilesManager.META_KEY_BYTES_PER_ANCESTOR).length();
 
     ListConverter<Long> ancestorConverter = new ListConverter<>(new LongValueConverter(), numAncestors + 1);
     
@@ -86,15 +78,19 @@ public class BinaryFilePrinter {
         }
 
       } catch (IOException e) {
-      throw new RuntimeException("Failed attempting to read file " + binaryFile.toString(), e);
+      throw new RuntimeException("Failed attempting to read file " + binaryFile, e);
     }
   }    
   
   private static void printIdsMapFile(Path binaryFile, JSONObject metajson) {
+    List<Integer> bytesReservedPerAncestors = new ArrayList<>();
+    int bytesReservedForId = metajson.getInt(BinaryFilesManager.META_KEY_BYTES_FOR_ID);
+    JSONArray ancestorBytesReserved = metajson.getJSONArray(BinaryFilesManager.META_KEY_BYTES_PER_ANCESTOR);
+    for (int i = 0; i < ancestorBytesReserved.length(); i++) {
+      bytesReservedPerAncestors.add(ancestorBytesReserved.getInt(i));
+    }
 
-    int numAncestors = metajson.getInt(BinaryFilesManager.META_KEY_NUM_ANCESTORS);
-
-    IdsMapConverter converter = new IdsMapConverter(numAncestors);
+    RecordIdValuesConverter converter = new RecordIdValuesConverter(bytesReservedPerAncestors, bytesReservedForId);
     
     try (DualBufferBinaryRecordReader reader = 
         new DualBufferBinaryRecordReader(binaryFile, converter.numBytes(), RECORDS_PER_BUFFER)){
@@ -103,7 +99,7 @@ public class BinaryFilePrinter {
           Optional<byte[]> rowBytes = reader.next();
           if (rowBytes.isEmpty())
             break;
-          IdsMap idsMapRow = rowBytes.map(converter::fromBytes)
+          RecordIdValues idsMapRow = rowBytes.map(converter::fromBytes)
             .orElseThrow(() -> new RuntimeException("Unexpected end of ancestors file"));
 
           List<String> rowStrings = new ArrayList<String>();
@@ -115,7 +111,7 @@ public class BinaryFilePrinter {
         }
 
       } catch (IOException e) {
-      throw new RuntimeException("Failed attempting to read file " + binaryFile.toString(), e);
+      throw new RuntimeException("Failed attempting to read file " + binaryFile, e);
     }
   }    
   

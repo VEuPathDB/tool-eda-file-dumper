@@ -2,15 +2,15 @@ package org.veupathdb.eda.binaryfiles.dumper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 import org.gusdb.fgputil.DualBufferBinaryRecordReader;
 import org.veupathdb.eda.binaryfiles.BinaryValueWriter;
 import org.veupathdb.service.eda.ss.model.Entity;
 import org.veupathdb.service.eda.ss.model.Study;
-import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager;
-import org.veupathdb.service.eda.ss.model.variable.binary.ListConverter;
-import org.veupathdb.service.eda.ss.model.variable.binary.LongValueConverter;
+import org.veupathdb.service.eda.ss.model.variable.binary.*;
 import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager.Operation;
 
 /**
@@ -34,9 +34,9 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
 
   private final ListConverter<Long> _parentAncestorsDeserializer;
   private final DualBufferBinaryRecordReader _parentAncestorsReader;
-  private final IdsMapConverter _parentIdsMapDeserializer;
+  private final RecordIdValuesConverter _parentIdValuesDeserializer;
   private final DualBufferBinaryRecordReader _parentIdsMapReader;
-  private final BinaryValueWriter<IdsMap> _idsMapWriter;
+  private final BinaryValueWriter<RecordIdValues> _idsMapWriter;
   private final BinaryValueWriter<List<Long>> _ancestorsWriter;
   boolean _firstRow = true;
   
@@ -45,11 +45,11 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
 
   private AtomicLong _idIndex = new AtomicLong(0);
 
-  public IdFilesDumperMultiAncestor(BinaryFilesManager bfm, Study study, Entity entity, Entity parentEntity) {
+  public IdFilesDumperMultiAncestor(BinaryFilesManager bfm, Study study, Entity entity, Entity parentEntity, Map<String, Integer> bytesReservedByEntityId) {
     
     int entityAncestorsCount = entity.getAncestorEntities().size();
     int parentEntityAncestorsCount = parentEntity.getAncestorEntities().size();
-    
+
     if (entityAncestorsCount < 1) 
       throw new IllegalArgumentException("Entity must have at least one ancestor.");
     if (parentEntityAncestorsCount != entityAncestorsCount-1)
@@ -57,7 +57,7 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
 
     // create input readers
     _parentAncestorsDeserializer = new ListConverter<>(new LongValueConverter(), entity.getAncestorEntities().size());
-    _parentIdsMapDeserializer = new IdsMapConverter(parentEntityAncestorsCount);
+    _parentIdValuesDeserializer = new RecordIdValuesConverter(parentEntity, bytesReservedByEntityId);
     try {
       
       _parentAncestorsReader =
@@ -69,14 +69,14 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
       _parentIdsMapReader = 
           new DualBufferBinaryRecordReader(
               bfm.getIdMapFile(study, parentEntity, Operation.READ), 
-              _parentIdsMapDeserializer.numBytes(), 
+              _parentIdValuesDeserializer.numBytes(),
               RECORDS_PER_BUFFER);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
     
     // create writers
-    _idsMapWriter = getIdsMapWriter(bfm, study, entity);    
+    _idsMapWriter = getIdsMapWriter(bfm, study, entity, new RecordIdValuesConverter(entity, bytesReservedByEntityId));
     _ancestorsWriter = getAncestorsWriter(bfm, study, entity);
   }
   
@@ -89,7 +89,7 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
     List<String> ancestorIds = row.subList(1, row.size());
     
     // write out ids_map file row
-    IdsMap idsMap = new IdsMap(curIdIndex, curStringId, ancestorIds);
+    RecordIdValues idsMap = new RecordIdValues(curIdIndex, curStringId, ancestorIds);
     _idsMapWriter.writeValue(idsMap);
         
    // write out ancestors file row
@@ -120,10 +120,10 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
     while (!parentIdString.equals(_currentParentIdString)) {
       
       // remember current parent ID string from parent ids_map file
-      IdsMap parentIdsMapRow = 
+      RecordIdValues parentIdsMapRow =
           _parentIdsMapReader
           .next()
-          .map(_parentIdsMapDeserializer::fromBytes)
+          .map(_parentIdValuesDeserializer::fromBytes)
           .orElseThrow(() -> new RuntimeException("Unexpected end of parent ids_map file"));
       _currentParentIdString = parentIdsMapRow.getEntityId();
       
