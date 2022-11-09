@@ -1,6 +1,7 @@
 package org.veupathdb.eda.binaryfiles.printer;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -52,23 +53,25 @@ public class BinaryFilePrinter {
   
   private static VariableType getVarType(String fileBaseName, JSONObject metajson) {
     if (!metajson.has(fileBaseName)) throw new RuntimeException("Meta json file does not contain key: " + fileBaseName);
-    return VariableType.fromString(metajson.getString(fileBaseName));
+    return VariableType.fromString(metajson.getString(fileBaseName).toLowerCase(Locale.ROOT));
   }
 
   private static void printAncestorFile(Path binaryFile, JSONObject metajson) {
     int numAncestors = metajson.getJSONArray(BinaryFilesManager.META_KEY_BYTES_PER_ANCESTOR).length();
 
     ListConverter<Long> ancestorConverter = new ListConverter<>(new LongValueConverter(), numAncestors + 1);
-    
-    try (DualBufferBinaryRecordReader ancestorReader = new DualBufferBinaryRecordReader(binaryFile,
-                                                                                        ancestorConverter.numBytes(), RECORDS_PER_BUFFER)){
+
+    try (DualBufferBinaryRecordReader<List<Long>> ancestorReader = new DualBufferBinaryRecordReader<>(
+        binaryFile,
+        ancestorConverter.numBytes(),
+        RECORDS_PER_BUFFER,
+        ancestorConverter::fromBytes)) {
 
         while (true) {
-          Optional<byte[]> ancestorRowBytes = ancestorReader.next();
-          if (ancestorRowBytes.isEmpty())
+          Optional<List<Long>> ancestorRowOpt = ancestorReader.next();
+          if (ancestorRowOpt.isEmpty())
             break;
-          List<Long> ancestorRow = ancestorRowBytes.map(ancestorConverter::fromBytes)
-            .orElseThrow(() -> new RuntimeException("Unexpected end of ancestors file"));
+          List<Long> ancestorRow = ancestorRowOpt.get();
 
           String text = ancestorRow.stream()
             .map(n -> String.valueOf(n))
@@ -92,17 +95,16 @@ public class BinaryFilePrinter {
 
     RecordIdValuesConverter converter = new RecordIdValuesConverter(bytesReservedPerAncestors, bytesReservedForId);
     
-    try (DualBufferBinaryRecordReader reader = 
-        new DualBufferBinaryRecordReader(binaryFile, converter.numBytes(), RECORDS_PER_BUFFER)){
+    try (DualBufferBinaryRecordReader<RecordIdValues> reader =
+        new DualBufferBinaryRecordReader<>(binaryFile, converter.numBytes(), RECORDS_PER_BUFFER, converter::fromBytes)){
 
         while (true) {
-          Optional<byte[]> rowBytes = reader.next();
-          if (rowBytes.isEmpty())
+          Optional<RecordIdValues> recordOptional = reader.next();
+          if (recordOptional.isEmpty())
             break;
-          RecordIdValues idsMapRow = rowBytes.map(converter::fromBytes)
-            .orElseThrow(() -> new RuntimeException("Unexpected end of ancestors file"));
 
-          List<String> rowStrings = new ArrayList<String>();
+          RecordIdValues idsMapRow = recordOptional.get();
+          List<String> rowStrings = new ArrayList<>();
           rowStrings.add(Long.toString(idsMapRow.getIdIndex()));
           rowStrings.add(idsMapRow.getEntityId());
           rowStrings.addAll(idsMapRow.getAncestorIds());
@@ -121,17 +123,22 @@ public class BinaryFilePrinter {
         getVarType(binaryFile.getFileName().toString(), metajson).getConverterSupplier().get();
     ValueWithIdDeserializer<?> varDeserializer = new ValueWithIdDeserializer<>(converter);
     
-    try (DualBufferBinaryRecordReader varReader = new DualBufferBinaryRecordReader(binaryFile,
-        varDeserializer.numBytes(), RECORDS_PER_BUFFER)){
+    try (DualBufferBinaryRecordReader<VariableValueIdPair<?>> varReader = new DualBufferBinaryRecordReader<>(binaryFile,
+        varDeserializer.numBytes(), RECORDS_PER_BUFFER, varDeserializer::fromBytes)){
 
         while (true) {
-          Optional<byte[]> varRowBytes = varReader.next();
-          if (varRowBytes.isEmpty())
+          Optional<VariableValueIdPair<?>> varRowOpt = varReader.next();
+          if (varRowOpt.isEmpty())
             break;
-          VariableValueIdPair<?> varRow = varRowBytes.map(varDeserializer::fromBytes)
-            .orElseThrow(() -> new RuntimeException("Unexpected end of variables file"));
+          VariableValueIdPair<?> varRow = varRowOpt.get();
 
-          String text = String.valueOf(varRow.getIdIndex()) + "\t" + varRow.getValue().toString();        
+          // This is a hack to ensure byte arrays get properly encoded before printed.
+          // Calling toString on a byte array will otherwise return address in memory.
+          String strValue = varRow.getValue() instanceof byte[]
+              ? new String((byte[]) varRow.getValue(), StandardCharsets.UTF_8)
+              : varRow.getValue().toString();
+
+          String text = varRow.getIdIndex() + "\t" + strValue;
           System.out.println(text);
         }
 

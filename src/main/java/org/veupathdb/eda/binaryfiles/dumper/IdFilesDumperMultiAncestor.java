@@ -33,9 +33,9 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
   private final static int PARENT_ID_COLUMN_INDEX = 1; // the position in the tabular stream of the parent's ID
 
   private final ListConverter<Long> _parentAncestorsDeserializer;
-  private final DualBufferBinaryRecordReader _parentAncestorsReader;
+  private final DualBufferBinaryRecordReader<List<Long>> _parentAncestorsReader;
   private final RecordIdValuesConverter _parentIdValuesDeserializer;
-  private final DualBufferBinaryRecordReader _parentIdsMapReader;
+  private final DualBufferBinaryRecordReader<RecordIdValues> _parentIdsMapReader;
   private final BinaryValueWriter<RecordIdValues> _idsMapWriter;
   private final BinaryValueWriter<List<Long>> _ancestorsWriter;
   boolean _firstRow = true;
@@ -61,16 +61,18 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
     try {
       
       _parentAncestorsReader =
-          new DualBufferBinaryRecordReader(
+          new DualBufferBinaryRecordReader<>(
               bfm.getAncestorFile(study, parentEntity, Operation.READ), 
               _parentAncestorsDeserializer.numBytes(), 
-              RECORDS_PER_BUFFER);
+              RECORDS_PER_BUFFER,
+              _parentAncestorsDeserializer::fromBytes);
       
       _parentIdsMapReader = 
-          new DualBufferBinaryRecordReader(
+          new DualBufferBinaryRecordReader<>(
               bfm.getIdMapFile(study, parentEntity, Operation.READ), 
               _parentIdValuesDeserializer.numBytes(),
-              RECORDS_PER_BUFFER);
+              RECORDS_PER_BUFFER,
+              _parentIdValuesDeserializer::fromBytes);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -123,12 +125,11 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
       RecordIdValues parentIdsMapRow =
           _parentIdsMapReader
           .next()
-          .map(_parentIdValuesDeserializer::fromBytes)
           .orElseThrow(() -> new RuntimeException("Unexpected end of parent ids_map file"));
       _currentParentIdString = parentIdsMapRow.getEntityId();
       
       // remember current parent ancestor file row
-      _currentParentAncestorRow = _parentAncestorsReader.next().map(_parentAncestorsDeserializer::fromBytes)
+      _currentParentAncestorRow = _parentAncestorsReader.next()
           .orElseThrow(() -> new RuntimeException("Unexpected end of parent ancestors file"));
 
       // validate, for the heck of it

@@ -34,7 +34,6 @@ public class VariableFilesDumper<T> implements FilesDumper {
 
     Long idIndex = _idIndex.getAndIncrement();              // unconditionally increment the id index
     if (row.get(_valColumnIndex).equals("")) return;        // but don't output missing data rows
-
     if (_valueVar.getIsMultiValued()) {
       writeMultiValue(row, idIndex);
     } else {

@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.gusdb.fgputil.functional.TreeNode;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -24,6 +26,8 @@ import org.veupathdb.service.eda.ss.model.variable.Variable;
 import org.veupathdb.service.eda.ss.model.variable.VariableWithValues;
 
 public class StudyDumper {
+  private static final Logger LOG = LogManager.getLogger(StudyDumper.class);
+
   private final DataSource _dataSource;
   private final Study _study;
   private final Path _studiesDirectory;
@@ -108,7 +112,9 @@ public class StudyDumper {
       FilteredResultFactory.produceTabularSubset(ds, _appDbSchema, study, entity, vars, List.of(), new TabularReportConfig(), dumper);
     }
     catch (Exception e) {
-      throw new RuntimeException("Could not dump files for study " + study.getStudyId(), e);
+      LOG.warn("Failed to dump files for study: {}, entity: {}, variable: {}", study.getStudyId(), entity.getId(),
+          variable.map(var -> var.getId()).orElse("none"), e);
+      // TODO Remove this exception swallowing once long free-text variables are accounted for.
     }
   }
 
