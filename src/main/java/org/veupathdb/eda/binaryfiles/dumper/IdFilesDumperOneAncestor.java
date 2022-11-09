@@ -33,7 +33,7 @@ public class IdFilesDumperOneAncestor implements FilesDumper {
   private final static int PARENT_ID_COLUMN_INDEX = 1; // the position in the tabular stream of the parent's ID
 
   private final ValueWithIdDeserializer<String> _parentIdMapDeserializer;
-  private final DualBufferBinaryRecordReader _parentIdMapReader;
+  private final DualBufferBinaryRecordReader<VariableValueIdPair<String>> _parentIdMapReader;
   private final BinaryValueWriter<RecordIdValues> _idsMapWriter;
   private final BinaryValueWriter<List<Long>> _ancestorsWriter;
   boolean _firstRow = true;
@@ -46,13 +46,14 @@ public class IdFilesDumperOneAncestor implements FilesDumper {
 
     // create input readers
     int bytesReservedForParentId = bytesReservedForIdByEntityId.get(parentEntity.getId());
-    _parentIdMapDeserializer = new ValueWithIdDeserializer<String>(new StringValueConverter(bytesReservedForParentId));
-    try {   
+    _parentIdMapDeserializer = new ValueWithIdDeserializer<>(new StringValueConverter(bytesReservedForParentId));
+    try {
       _parentIdMapReader = 
-          new DualBufferBinaryRecordReader(
+          new DualBufferBinaryRecordReader<>(
               bfm.getIdMapFile(study, parentEntity, Operation.READ), 
               _parentIdMapDeserializer.numBytes(), 
-              RECORDS_PER_BUFFER);
+              RECORDS_PER_BUFFER,
+              _parentIdMapDeserializer::fromBytes);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -102,7 +103,6 @@ public class IdFilesDumperOneAncestor implements FilesDumper {
       VariableValueIdPair<String> parentIdMapRow = 
           _parentIdMapReader
           .next()
-          .map(_parentIdMapDeserializer::fromBytes)
           .orElseThrow(() -> new RuntimeException("Unexpected end of parent id map file"));
       _currentParentIdMapRow = parentIdMapRow;
     }
