@@ -40,15 +40,21 @@ public class Main {
 
     // instantiate a connection to the database
     try (DatabaseInstance appDb = new DatabaseInstance(SimpleDbConfig.create(
-        SupportedPlatform.ORACLE, connectionUrl, connectionUser, connectionPassword))) {
+        SupportedPlatform.ORACLE, connectionUrl, connectionUser, connectionPassword));
+         DatabaseInstance appDb2 = new DatabaseInstance(SimpleDbConfig.create(
+                 SupportedPlatform.ORACLE, connectionUrl, connectionUser, connectionPassword))) {
 
       DataSource ds = appDb.getDataSource();
-      StudyFactory studyFactory = new StudyFactory(ds, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED);
+      DataSource ds2 = appDb2.getDataSource();
+      StudyFactory metadataScanningStudyFactory = new StudyFactory(ds, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED, null);
+      Study studyWithoutMd = metadataScanningStudyFactory.getStudyById(studyId);
+      ScanningBinaryMetadataProvider metadataProvider = new ScanningBinaryMetadataProvider(studyWithoutMd, ds, APP_DB_SCHEMA);
+
+      StudyFactory studyFactory = new StudyFactory(ds2, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED, metadataProvider);
       Study study = studyFactory.getStudyById(studyId);
       
-      StudyDumper studyDumper = new StudyDumper(ds, APP_DB_SCHEMA, studiesDirectory, study);
+      StudyDumper studyDumper = new StudyDumper(ds2, APP_DB_SCHEMA, studiesDirectory, study);
       studyDumper.dumpStudy();
-
     }
   }
   

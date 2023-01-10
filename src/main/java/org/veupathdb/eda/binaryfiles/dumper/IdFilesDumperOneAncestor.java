@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.gusdb.fgputil.DualBufferBinaryRecordReader;
@@ -28,6 +30,7 @@ import org.veupathdb.service.eda.ss.model.variable.VariableValueIdPair;
  *
  */
 public class IdFilesDumperOneAncestor implements FilesDumper {
+  private static final ExecutorService THREAD_POOL = Executors.newCachedThreadPool();
   private static final int RECORDS_PER_BUFFER = 100;
   private final static int ID_COLUMN_INDEX = 0;  // the position in tabular stream of entity ID
   private final static int PARENT_ID_COLUMN_INDEX = 1; // the position in the tabular stream of the parent's ID
@@ -38,7 +41,7 @@ public class IdFilesDumperOneAncestor implements FilesDumper {
   private final BinaryValueWriter<List<Long>> _ancestorsWriter;
   boolean _firstRow = true;
   
-  private VariableValueIdPair<String> _currentParentIdMapRow = new VariableValueIdPair<String>(-1L, "non-existent ID");
+  private VariableValueIdPair<String> _currentParentIdMapRow = new VariableValueIdPair<>(-1L, "non-existent ID");
 
   private AtomicLong _idIndex = new AtomicLong(0);
 
@@ -53,7 +56,9 @@ public class IdFilesDumperOneAncestor implements FilesDumper {
               bfm.getIdMapFile(study, parentEntity, Operation.READ), 
               _parentIdMapDeserializer.numBytes(), 
               RECORDS_PER_BUFFER,
-              _parentIdMapDeserializer::fromBytes);
+              _parentIdMapDeserializer::fromBytes,
+              THREAD_POOL,
+              THREAD_POOL);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -77,7 +82,7 @@ public class IdFilesDumperOneAncestor implements FilesDumper {
         
    // write out ancestors row
    advanceParentStreams(row.get(PARENT_ID_COLUMN_INDEX));
-   List<Long> ancestorsRow = new ArrayList<Long>();
+   List<Long> ancestorsRow = new ArrayList<>();
     ancestorsRow.add(curIdIndex);
     ancestorsRow.add(Long.valueOf(_currentParentIdMapRow.getIdIndex()));
     _ancestorsWriter.writeValue(ancestorsRow);
@@ -102,8 +107,7 @@ public class IdFilesDumperOneAncestor implements FilesDumper {
       // remember current parent ID string
       VariableValueIdPair<String> parentIdMapRow = 
           _parentIdMapReader
-          .next()
-          .orElseThrow(() -> new RuntimeException("Unexpected end of parent id map file"));
+          .next();
       _currentParentIdMapRow = parentIdMapRow;
     }
   }

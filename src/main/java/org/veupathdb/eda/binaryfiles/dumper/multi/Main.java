@@ -3,6 +3,7 @@ package org.veupathdb.eda.binaryfiles.dumper.multi;
 import org.gusdb.fgputil.db.platform.SupportedPlatform;
 import org.gusdb.fgputil.db.pool.DatabaseInstance;
 import org.gusdb.fgputil.db.pool.SimpleDbConfig;
+import org.veupathdb.eda.binaryfiles.dumper.ScanningBinaryMetadataProvider;
 import org.veupathdb.eda.binaryfiles.dumper.StudyDumper;
 import org.veupathdb.service.eda.ss.model.Study;
 import org.veupathdb.service.eda.ss.model.StudyOverview;
@@ -48,8 +49,13 @@ public class Main {
         SupportedPlatform.ORACLE, connectionUrl, connectionUser, connectionPassword))) {
 
       DataSource ds = appDb.getDataSource();
-      StudyFactory studyFactory = new StudyFactory(ds, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED);
-      for (StudyOverview studyOverview: studyFactory.getStudyOverviews()) {
+      StudyFactory metadataScanningStudyFactory = new StudyFactory(ds, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED, null);
+
+      for (StudyOverview studyOverview: metadataScanningStudyFactory.getStudyOverviews()) {
+        Study studyWithoutMd = metadataScanningStudyFactory.getStudyById(studyOverview.getStudyId());
+        ScanningBinaryMetadataProvider metadataProvider = new ScanningBinaryMetadataProvider(studyWithoutMd, ds, APP_DB_SCHEMA);
+        StudyFactory studyFactory = new StudyFactory(ds, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED, metadataProvider);
+
         try {
           Study study = studyFactory.getStudyById(studyOverview.getStudyId());
           StudyDumper studyDumper = new StudyDumper(ds, APP_DB_SCHEMA, studiesDirectory, study);
