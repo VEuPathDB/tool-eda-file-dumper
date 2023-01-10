@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 import org.gusdb.fgputil.DualBufferBinaryRecordReader;
 import org.veupathdb.eda.binaryfiles.BinaryValueWriter;

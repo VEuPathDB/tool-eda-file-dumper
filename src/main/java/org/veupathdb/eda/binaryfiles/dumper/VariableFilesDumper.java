@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.json.JSONArray;
-import org.veupathdb.service.eda.ss.model.variable.BinaryProperties;
 import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager;
 import org.veupathdb.eda.binaryfiles.BinaryValueWriter;
 import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager.Operation;
