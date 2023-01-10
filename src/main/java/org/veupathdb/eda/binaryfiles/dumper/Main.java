@@ -39,21 +39,20 @@ public class Main {
     String connectionPassword = getRequiredVar("APPDB_PASS");
 
     // instantiate a connection to the database
-    try (DatabaseInstance appDb = new DatabaseInstance(SimpleDbConfig.create(
+    try (DatabaseInstance metadataScanningDbInstance = new DatabaseInstance(SimpleDbConfig.create(
         SupportedPlatform.ORACLE, connectionUrl, connectionUser, connectionPassword));
-         DatabaseInstance appDb2 = new DatabaseInstance(SimpleDbConfig.create(
-                 SupportedPlatform.ORACLE, connectionUrl, connectionUser, connectionPassword))) {
-
-      DataSource ds = appDb.getDataSource();
-      DataSource ds2 = appDb2.getDataSource();
-      StudyFactory metadataScanningStudyFactory = new StudyFactory(ds, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED, null);
+         DatabaseInstance dbInstance = new DatabaseInstance(SimpleDbConfig.create(
+             SupportedPlatform.ORACLE, connectionUrl, connectionUser, connectionPassword))) {
+      DataSource metadataScanningDataSource = metadataScanningDbInstance.getDataSource();
+      DataSource dataSource = dbInstance.getDataSource();
+      StudyFactory metadataScanningStudyFactory = new StudyFactory(metadataScanningDataSource, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED, null);
       Study studyWithoutMd = metadataScanningStudyFactory.getStudyById(studyId);
-      ScanningBinaryMetadataProvider metadataProvider = new ScanningBinaryMetadataProvider(studyWithoutMd, ds, APP_DB_SCHEMA);
+      ScanningBinaryMetadataProvider metadataProvider = new ScanningBinaryMetadataProvider(studyWithoutMd, metadataScanningDataSource, APP_DB_SCHEMA);
 
-      StudyFactory studyFactory = new StudyFactory(ds2, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED, metadataProvider);
+      StudyFactory studyFactory = new StudyFactory(dataSource, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED, metadataProvider);
       Study study = studyFactory.getStudyById(studyId);
       
-      StudyDumper studyDumper = new StudyDumper(ds2, APP_DB_SCHEMA, studiesDirectory, study);
+      StudyDumper studyDumper = new StudyDumper(dataSource, APP_DB_SCHEMA, studiesDirectory, study);
       studyDumper.dumpStudy();
     }
   }

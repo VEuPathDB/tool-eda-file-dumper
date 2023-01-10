@@ -67,12 +67,12 @@ public class BinaryFilePrinter {
     ListConverter<Long> ancestorConverter = new ListConverter<>(new LongValueConverter(), numAncestors + 1);
 
     try (DualBufferBinaryRecordReader<List<Long>> ancestorReader = new DualBufferBinaryRecordReader<>(
-            binaryFile,
-            ancestorConverter.numBytes(),
-            RECORDS_PER_BUFFER,
-            ancestorConverter::fromBytes,
-            THREAD_POOL,
-            THREAD_POOL)) {
+        binaryFile,
+        ancestorConverter.numBytes(),
+        RECORDS_PER_BUFFER,
+        ancestorConverter::fromBytes,
+        THREAD_POOL,
+        THREAD_POOL)) {
 
         while (true) {
           if (!ancestorReader.hasNext()) {
@@ -90,7 +90,7 @@ public class BinaryFilePrinter {
       } catch (IOException e) {
       throw new RuntimeException("Failed attempting to read file " + binaryFile, e);
     }
-  }    
+  }
   
   private static void printIdsMapFile(Path binaryFile, BinaryFilesManager.Metadata metadata) {
     List<Integer> bytesReservedPerAncestors = metadata.getBytesReservedPerAncestor();

@@ -48,11 +48,7 @@ public class StudyDumper {
   }
   
   public void dumpStudy() {
-    try {
-      _bfm.getStudyDir(_study, Operation.WRITE);
-    } catch (Exception e) {
-      LOG.info("Dir already exists");
-    }
+    _bfm.getStudyDir(_study, Operation.WRITE);
     TreeNode<Entity> entityTree = _study.getEntityTree();
     Entity rootEntity = entityTree.getContents();
     
