@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.gusdb.fgputil.DualBufferBinaryRecordReader;
@@ -37,15 +39,18 @@ public class IdFilesDumperOneAncestor implements FilesDumper {
   private final BinaryValueWriter<RecordIdValues> _idsMapWriter;
   private final BinaryValueWriter<List<Long>> _ancestorsWriter;
   boolean _firstRow = true;
+  private ExecutorService _threadPool;
   
-  private VariableValueIdPair<String> _currentParentIdMapRow = new VariableValueIdPair<String>(-1L, "non-existent ID");
+  private VariableValueIdPair<String> _currentParentIdMapRow = new VariableValueIdPair<>(-1L, "non-existent ID");
 
   private AtomicLong _idIndex = new AtomicLong(0);
 
-  public IdFilesDumperOneAncestor(BinaryFilesManager bfm, Study study, Entity entity, Entity parentEntity, Map<String, Integer> bytesReservedForIdByEntityId) {
+  public IdFilesDumperOneAncestor(BinaryFilesManager bfm, Study study, Entity entity, Entity parentEntity,
+                                  Map<String, Integer> bytesReservedForIdByEntityId, ExecutorService threadPool) {
 
     // create input readers
     int bytesReservedForParentId = bytesReservedForIdByEntityId.get(parentEntity.getId());
+    _threadPool = Executors.newCachedThreadPool();
     _parentIdMapDeserializer = new ValueWithIdDeserializer<>(new StringValueConverter(bytesReservedForParentId));
     try {
       _parentIdMapReader = 
@@ -53,7 +58,9 @@ public class IdFilesDumperOneAncestor implements FilesDumper {
               bfm.getIdMapFile(study, parentEntity, Operation.READ), 
               _parentIdMapDeserializer.numBytes(), 
               RECORDS_PER_BUFFER,
-              _parentIdMapDeserializer::fromBytes);
+              _parentIdMapDeserializer::fromBytes,
+              _threadPool, // A shared thread pool can be used here for deserialization and file I/O.
+              _threadPool);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -77,7 +84,7 @@ public class IdFilesDumperOneAncestor implements FilesDumper {
         
    // write out ancestors row
    advanceParentStreams(row.get(PARENT_ID_COLUMN_INDEX));
-   List<Long> ancestorsRow = new ArrayList<Long>();
+   List<Long> ancestorsRow = new ArrayList<>();
     ancestorsRow.add(curIdIndex);
     ancestorsRow.add(Long.valueOf(_currentParentIdMapRow.getIdIndex()));
     _ancestorsWriter.writeValue(ancestorsRow);
@@ -88,6 +95,7 @@ public class IdFilesDumperOneAncestor implements FilesDumper {
     _parentIdMapReader.close();
     _idsMapWriter.close();
     _ancestorsWriter.close();
+    _threadPool.shutdown();
   }
   
   /* advance parent streams to our current ID (if needed)
@@ -102,8 +110,7 @@ public class IdFilesDumperOneAncestor implements FilesDumper {
       // remember current parent ID string
       VariableValueIdPair<String> parentIdMapRow = 
           _parentIdMapReader
-          .next()
-          .orElseThrow(() -> new RuntimeException("Unexpected end of parent id map file"));
+          .next();
       _currentParentIdMapRow = parentIdMapRow;
     }
   }

@@ -6,8 +6,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.gusdb.fgputil.DualBufferBinaryRecordReader;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -20,44 +23,45 @@ import org.veupathdb.service.eda.ss.model.variable.VariableValueIdPair;
  * Print to tab delimited text the contents of binary files produced by the eda binary file dumper.
  */
 public class BinaryFilePrinter {
-  
+  private static final ExecutorService THREAD_POOL = Executors.newCachedThreadPool();
   private static final int RECORDS_PER_BUFFER = 100;
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   public static void printBinaryFile(Path binaryFile, Path metajsonFile) {
-    
-    JSONObject metajson = readMetaJsonFile(metajsonFile);
+    BinaryFilesManager.Metadata metadata = readMetaJsonFile(metajsonFile);
     String binaryFileNm = binaryFile.toFile().getName();
     
     switch (binaryFileNm) {
     case BinaryFilesManager.ANCESTORS_FILE_NAME:
-      printAncestorFile(binaryFile, metajson);
+      printAncestorFile(binaryFile, metadata);
       break;
     case BinaryFilesManager.IDS_MAP_FILE_NAME:
-      printIdsMapFile(binaryFile, metajson);
+      printIdsMapFile(binaryFile, metadata);
       break;
     default:
-      printVarFile(binaryFile, metajson);
+      try {
+        printVarFile(binaryFile, metadata);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
     };
   }
   
-  private static JSONObject readMetaJsonFile(Path metajsonFile) {
+  private static BinaryFilesManager.Metadata readMetaJsonFile(Path metajsonFile) {
     if (!metajsonFile.toFile().exists()) throw new RuntimeException("metajson file '" + metajsonFile + "' does not exist");
     try {
-      String jsonString = Files.readString(metajsonFile);
-      JSONObject json = new JSONObject(jsonString);
-      return json;
-    } catch (IOException | JSONException e) {
+      return OBJECT_MAPPER.readValue(metajsonFile.toFile(), BinaryFilesManager.Metadata.class);
+    } catch (IOException e) {
       throw new RuntimeException("Failed reading meta json file", e);
     }
   }
   
-  private static VariableType getVarType(String fileBaseName, JSONObject metajson) {
-    if (!metajson.has(fileBaseName)) throw new RuntimeException("Meta json file does not contain key: " + fileBaseName);
-    return VariableType.fromString(metajson.getString(fileBaseName).toLowerCase(Locale.ROOT));
+  private static VariableType getVarType(BinaryFilesManager.VariableMeta meta) {
+    return VariableType.fromString(meta.getType());
   }
 
-  private static void printAncestorFile(Path binaryFile, JSONObject metajson) {
-    int numAncestors = metajson.getJSONArray(BinaryFilesManager.META_KEY_BYTES_PER_ANCESTOR).length();
+  private static void printAncestorFile(Path binaryFile, BinaryFilesManager.Metadata metadata) {
+    int numAncestors = metadata.getBytesReservedPerAncestor().size();
 
     ListConverter<Long> ancestorConverter = new ListConverter<>(new LongValueConverter(), numAncestors + 1);
 
@@ -65,13 +69,15 @@ public class BinaryFilePrinter {
         binaryFile,
         ancestorConverter.numBytes(),
         RECORDS_PER_BUFFER,
-        ancestorConverter::fromBytes)) {
+        ancestorConverter::fromBytes,
+        THREAD_POOL,
+        THREAD_POOL)) {
 
         while (true) {
-          Optional<List<Long>> ancestorRowOpt = ancestorReader.next();
-          if (ancestorRowOpt.isEmpty())
+          if (!ancestorReader.hasNext()) {
             break;
-          List<Long> ancestorRow = ancestorRowOpt.get();
+          }
+          List<Long> ancestorRow = ancestorReader.next();
 
           String text = ancestorRow.stream()
             .map(n -> String.valueOf(n))
@@ -83,27 +89,23 @@ public class BinaryFilePrinter {
       } catch (IOException e) {
       throw new RuntimeException("Failed attempting to read file " + binaryFile, e);
     }
-  }    
+  }
   
-  private static void printIdsMapFile(Path binaryFile, JSONObject metajson) {
-    List<Integer> bytesReservedPerAncestors = new ArrayList<>();
-    int bytesReservedForId = metajson.getInt(BinaryFilesManager.META_KEY_BYTES_FOR_ID);
-    JSONArray ancestorBytesReserved = metajson.getJSONArray(BinaryFilesManager.META_KEY_BYTES_PER_ANCESTOR);
-    for (int i = 0; i < ancestorBytesReserved.length(); i++) {
-      bytesReservedPerAncestors.add(ancestorBytesReserved.getInt(i));
-    }
+  private static void printIdsMapFile(Path binaryFile, BinaryFilesManager.Metadata metadata) {
+    List<Integer> bytesReservedPerAncestors = metadata.getBytesReservedPerAncestor();
+    int bytesReservedForId = metadata.getBytesReservedForId();
 
     RecordIdValuesConverter converter = new RecordIdValuesConverter(bytesReservedPerAncestors, bytesReservedForId);
     
     try (DualBufferBinaryRecordReader<RecordIdValues> reader =
-        new DualBufferBinaryRecordReader<>(binaryFile, converter.numBytes(), RECORDS_PER_BUFFER, converter::fromBytes)){
+        new DualBufferBinaryRecordReader<>(binaryFile, converter.numBytes(), RECORDS_PER_BUFFER, converter::fromBytes,
+                THREAD_POOL, THREAD_POOL)){
 
         while (true) {
-          Optional<RecordIdValues> recordOptional = reader.next();
-          if (recordOptional.isEmpty())
+          if (!reader.hasNext())
             break;
 
-          RecordIdValues idsMapRow = recordOptional.get();
+          RecordIdValues idsMapRow = reader.next();
           List<String> rowStrings = new ArrayList<>();
           rowStrings.add(Long.toString(idsMapRow.getIdIndex()));
           rowStrings.add(idsMapRow.getEntityId());
@@ -117,20 +119,22 @@ public class BinaryFilePrinter {
     }
   }    
   
-  private static void printVarFile(Path binaryFile, JSONObject metajson) {
+  private static void printVarFile(Path binaryFile, BinaryFilesManager.Metadata metadata) throws Exception {
+    BinaryFilesManager.VariableMeta variableMeta = metadata.getVariableMetadata().stream()
+        .filter(var -> binaryFile.getFileName().toString().contains(var.getVariableId()))
+        .findFirst()
+        .orElseThrow(() -> new RuntimeException("Cannot find variable metadata, unable to print variable."));
 
-    BinaryConverter<?>converter = 
-        getVarType(binaryFile.getFileName().toString(), metajson).getConverterSupplier().get();
+    BinaryConverter<?>converter = getVarType(variableMeta).getConverterSupplier().apply(variableMeta.getProperties());
     ValueWithIdDeserializer<?> varDeserializer = new ValueWithIdDeserializer<>(converter);
     
     try (DualBufferBinaryRecordReader<VariableValueIdPair<?>> varReader = new DualBufferBinaryRecordReader<>(binaryFile,
-        varDeserializer.numBytes(), RECORDS_PER_BUFFER, varDeserializer::fromBytes)){
+        varDeserializer.numBytes(), RECORDS_PER_BUFFER, varDeserializer::fromBytes, THREAD_POOL, THREAD_POOL)){
 
         while (true) {
-          Optional<VariableValueIdPair<?>> varRowOpt = varReader.next();
-          if (varRowOpt.isEmpty())
+          if (!varReader.hasNext())
             break;
-          VariableValueIdPair<?> varRow = varRowOpt.get();
+          VariableValueIdPair<?> varRow = varReader.next();
 
           // This is a hack to ensure byte arrays get properly encoded before printed.
           // Calling toString on a byte array will otherwise return address in memory.

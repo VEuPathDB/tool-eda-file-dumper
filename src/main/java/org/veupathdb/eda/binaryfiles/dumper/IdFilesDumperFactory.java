@@ -5,12 +5,15 @@ import org.veupathdb.service.eda.ss.model.Study;
 import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager;
 
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class IdFilesDumperFactory {
   private BinaryFilesManager bfm;
   private Study study;
   private Entity entity;
   private Entity parentEntity;
+  private ExecutorService threadPool;
 
   public IdFilesDumperFactory(BinaryFilesManager bfm,
                               Study study,
@@ -20,6 +23,7 @@ public class IdFilesDumperFactory {
     this.study = study;
     this.entity = entity;
     this.parentEntity = parentEntity;
+    this.threadPool = Executors.newCachedThreadPool();
   }
 
   /**
@@ -29,8 +33,8 @@ public class IdFilesDumperFactory {
   public FilesDumper create(Map<String, Integer> bytesReservedForIdByEntityId) {
     switch (entity.getAncestorEntities().size()) {
       case 0: return new IdFilesDumperNoAncestor(bfm, study, entity, bytesReservedForIdByEntityId.get(entity.getId()));
-      case 1: return new IdFilesDumperOneAncestor(bfm, study, entity, parentEntity, bytesReservedForIdByEntityId);
-      default: return new IdFilesDumperMultiAncestor(bfm, study, entity, parentEntity, bytesReservedForIdByEntityId);
+      case 1: return new IdFilesDumperOneAncestor(bfm, study, entity, parentEntity, bytesReservedForIdByEntityId, threadPool);
+      default: return new IdFilesDumperMultiAncestor(bfm, study, entity, parentEntity, bytesReservedForIdByEntityId, threadPool);
     }
   }
 }

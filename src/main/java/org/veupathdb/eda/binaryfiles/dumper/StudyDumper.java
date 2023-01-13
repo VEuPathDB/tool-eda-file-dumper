@@ -4,17 +4,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gusdb.fgputil.functional.TreeNode;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.veupathdb.service.eda.ss.model.tabular.TabularHeaderFormat;
 import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager;
 import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager.Operation;
@@ -26,14 +23,16 @@ import org.veupathdb.service.eda.ss.model.variable.Variable;
 import org.veupathdb.service.eda.ss.model.variable.VariableWithValues;
 
 public class StudyDumper {
+  private static final int INDEX_OF_ID = 0;
   private static final Logger LOG = LogManager.getLogger(StudyDumper.class);
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private final DataSource _dataSource;
   private final Study _study;
   private final Path _studiesDirectory;
   private final String _appDbSchema;
   private final BinaryFilesManager _bfm;
-  
+
   public StudyDumper(DataSource dataSource, String appDbSchema, Path studiesDirectory, Study study) {
     _dataSource = dataSource;
     _appDbSchema = appDbSchema;
@@ -57,7 +56,7 @@ public class StudyDumper {
 
     // Find the maximum length of an ID for this entity to determine space to allocate for each ID.
     // Add 4 to store the size of the ID as well.
-    int maxIdLength = scanForMaxIdLength(entity);
+    int maxIdLength = scanForMaxLength(entity);
 
     // Add the value to the Map so that it is available when dumping subtrees recursively.
     entityIdToMaxIdLength.put(entity.getId(), maxIdLength);
@@ -75,34 +74,37 @@ public class StudyDumper {
     _bfm.getEntityDir(_study, entity, Operation.WRITE);
 
     // create an object that will track minor meta info about the files, sufficient to parse them into text
-    JSONObject metaJson = new JSONObject();
+    BinaryFilesManager.Metadata metadata = new BinaryFilesManager.Metadata();
 
-    JSONArray ancestorsJson = new JSONArray();
+    List<Integer> bytesReservedPerAncestor = new ArrayList<>();
     // Order is important, should be written in the same order as the ancestorEntities array list.
     for (Entity ancestor: entity.getAncestorEntities()) {
-      String ancestorEntityId = ancestor.getId();
-      ancestorsJson.put(entityIdToMaxIdLength.get(ancestorEntityId));
+      final String ancestorEntityId = ancestor.getId();
+      bytesReservedPerAncestor.add(entityIdToMaxIdLength.get(ancestorEntityId));
     }
-
-    metaJson.put(BinaryFilesManager.META_KEY_BYTES_PER_ANCESTOR, ancestorsJson);
-    metaJson.put(BinaryFilesManager.META_KEY_BYTES_FOR_ID, entityIdToMaxIdLength.get(entity.getId()));
-
+    metadata.setBytesReservedPerAncestor(bytesReservedPerAncestor);
+    metadata.setBytesReservedForId(entityIdToMaxIdLength.get(entity.getId()));
     // first select no variables to dump the ID and ancestors files
     handleResult(_dataSource, _study, entity, Optional.empty(), () -> idDumperFactory.create(entityIdToMaxIdLength));
 
+    List<BinaryFilesManager.VariableMeta> variableMetadata = new ArrayList<>();
     // loop through variables, creating a file for each
     for (Variable variable : entity.getVariables()) {
       
       if (!variable.hasValues()) continue; // skip categories
       VariableWithValues<?> valueVar = (VariableWithValues<?>)variable;
-      
-      handleResult(_dataSource, _study, entity, Optional.of(valueVar), () -> new VariableFilesDumper<>(_bfm, _study, entity, valueVar));
 
-      metaJson.put(_bfm.getVariableFile(_study, entity, variable, Operation.READ).getFileName().toString(), 
-                   valueVar.getType().getTypeString()); 
-    }   
+      BinaryFilesManager.VariableMeta varMeta = new BinaryFilesManager.VariableMeta();
+      varMeta.setVariableId(variable.getId());
+      varMeta.setType(valueVar.getType().getTypeString());
+      varMeta.setProperties(valueVar.getBinaryProperties());
+      variableMetadata.add(varMeta);
+
+      handleResult(_dataSource, _study, entity, Optional.of(valueVar), () -> new VariableFilesDumper<>(_bfm, _study, entity, valueVar));
+    }
+    metadata.setVariableMetadata(variableMetadata);
     
-    writeMetaJsonFile(metaJson, entity);
+    writeMetaJsonFile(metadata, entity);
     writeDoneFile(_bfm.getEntityDir(_study, entity, Operation.READ));
   }
 
@@ -118,13 +120,20 @@ public class StudyDumper {
     }
   }
 
-  private int scanForMaxIdLength(Entity entity) {
+
+  private int scanForMaxLength(Entity entity) {
+    return scanForMaxLength(entity, null);
+  }
+
+  private int scanForMaxLength(Entity entity, VariableWithValues variable) {
+    List<VariableWithValues> variables = variable == null ? List.of() : List.of(variable);
     try {
       final TabularReportConfig reportConfig = new TabularReportConfig();
       reportConfig.setHeaderFormat(TabularHeaderFormat.STANDARD);
-      final MaxIdLengthFinder maxIdLengthFinder = new MaxIdLengthFinder();
-      FilteredResultFactory.produceTabularSubset(_dataSource, _appDbSchema, _study, entity, List.of(), List.of(), new TabularReportConfig(), maxIdLengthFinder);
-      return maxIdLengthFinder.getMaxLength();
+      int index = variable == null ? INDEX_OF_ID : entity.getAncestorEntities().size() + 1;
+      final MaxLengthFinder maxLengthFinder = new MaxLengthFinder(index);
+      FilteredResultFactory.produceTabularSubset(_dataSource, _appDbSchema, _study, entity, variables, List.of(), new TabularReportConfig(), maxLengthFinder);
+      return maxLengthFinder.getMaxLength();
     }
     catch (Exception e) {
       throw new RuntimeException("Could not dump files for study " + _study.getStudyId(), e);
@@ -132,10 +141,9 @@ public class StudyDumper {
   }
 
 
-  private void writeMetaJsonFile(JSONObject metaJson, Entity entity) {
+  private void writeMetaJsonFile(BinaryFilesManager.Metadata metadata, Entity entity) {
     try (FileWriter writer = new FileWriter(_bfm.getMetaJsonFile(_study, entity, Operation.WRITE).toFile())) {
-      writer.write(metaJson.toString(2));
-      writer.flush();
+      OBJECT_MAPPER.writeValue(writer, metadata);
     } catch (IOException e) {
       throw new RuntimeException("Failed writing meta.json file.", e);
     }   

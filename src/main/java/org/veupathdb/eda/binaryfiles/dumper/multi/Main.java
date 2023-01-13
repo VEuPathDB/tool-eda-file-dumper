@@ -3,12 +3,15 @@ package org.veupathdb.eda.binaryfiles.dumper.multi;
 import org.gusdb.fgputil.db.platform.SupportedPlatform;
 import org.gusdb.fgputil.db.pool.DatabaseInstance;
 import org.gusdb.fgputil.db.pool.SimpleDbConfig;
+import org.veupathdb.eda.binaryfiles.dumper.ScanningBinaryMetadataProvider;
 import org.veupathdb.eda.binaryfiles.dumper.StudyDumper;
 import org.veupathdb.service.eda.ss.model.Study;
 import org.veupathdb.service.eda.ss.model.StudyOverview;
 import org.veupathdb.service.eda.ss.model.db.StudyFactory;
 import org.veupathdb.service.eda.ss.model.db.StudyProvider;
 import org.veupathdb.service.eda.ss.model.db.StudyResolver;
+import org.veupathdb.service.eda.ss.model.db.VariableFactory;
+import org.veupathdb.service.eda.ss.model.reducer.EmptyBinaryMetadataProvider;
 
 import javax.sql.DataSource;
 
@@ -45,11 +48,18 @@ public class Main {
 
     // instantiate a connection to the database
     try (DatabaseInstance appDb = new DatabaseInstance(SimpleDbConfig.create(
-        SupportedPlatform.ORACLE, connectionUrl, connectionUser, connectionPassword))) {
+        SupportedPlatform.ORACLE, connectionUrl, connectionUser, connectionPassword, 2))) {
 
       DataSource ds = appDb.getDataSource();
-      StudyFactory studyFactory = new StudyFactory(ds, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED);
-      for (StudyOverview studyOverview: studyFactory.getStudyOverviews()) {
+      VariableFactory undecoratedVarFactory = new VariableFactory(ds, APP_DB_SCHEMA, new EmptyBinaryMetadataProvider());
+      StudyFactory undecoratedStudyFactory = new StudyFactory(ds, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED, undecoratedVarFactory);
+
+      for (StudyOverview studyOverview: undecoratedStudyFactory.getStudyOverviews()) {
+        Study undecoratedStudy = undecoratedStudyFactory.getStudyById(studyOverview.getStudyId());
+        ScanningBinaryMetadataProvider metadataProvider = new ScanningBinaryMetadataProvider(undecoratedStudy, ds, APP_DB_SCHEMA);
+        VariableFactory variableFactory = new VariableFactory(ds, APP_DB_SCHEMA, metadataProvider);
+        StudyFactory studyFactory = new StudyFactory(ds, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED, variableFactory);
+
         try {
           Study study = studyFactory.getStudyById(studyOverview.getStudyId());
           StudyDumper studyDumper = new StudyDumper(ds, APP_DB_SCHEMA, studiesDirectory, study);
