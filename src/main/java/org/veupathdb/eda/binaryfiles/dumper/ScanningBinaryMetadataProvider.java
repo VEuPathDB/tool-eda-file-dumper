@@ -11,6 +11,10 @@ import org.veupathdb.service.eda.ss.model.variable.binary.EmptyBinaryProperties;
 import javax.sql.DataSource;
 import java.util.*;
 
+/**
+ * Provides study metadata needed for binary encoding by scanning the database. This implementation is intended for use
+ * when the binary files are being generated, since the metadata file is not available.
+ */
 public class ScanningBinaryMetadataProvider implements BinaryMetadataProvider {
     private Study study;
     private DataSource dataSource;

@@ -30,7 +30,6 @@ import org.veupathdb.service.eda.ss.model.variable.VariableValueIdPair;
  *
  */
 public class IdFilesDumperOneAncestor implements FilesDumper {
-  private static final ExecutorService THREAD_POOL = Executors.newCachedThreadPool();
   private static final int RECORDS_PER_BUFFER = 100;
   private final static int ID_COLUMN_INDEX = 0;  // the position in tabular stream of entity ID
   private final static int PARENT_ID_COLUMN_INDEX = 1; // the position in the tabular stream of the parent's ID
@@ -40,15 +39,18 @@ public class IdFilesDumperOneAncestor implements FilesDumper {
   private final BinaryValueWriter<RecordIdValues> _idsMapWriter;
   private final BinaryValueWriter<List<Long>> _ancestorsWriter;
   boolean _firstRow = true;
+  private ExecutorService _threadPool;
   
   private VariableValueIdPair<String> _currentParentIdMapRow = new VariableValueIdPair<>(-1L, "non-existent ID");
 
   private AtomicLong _idIndex = new AtomicLong(0);
 
-  public IdFilesDumperOneAncestor(BinaryFilesManager bfm, Study study, Entity entity, Entity parentEntity, Map<String, Integer> bytesReservedForIdByEntityId) {
+  public IdFilesDumperOneAncestor(BinaryFilesManager bfm, Study study, Entity entity, Entity parentEntity,
+                                  Map<String, Integer> bytesReservedForIdByEntityId, ExecutorService threadPool) {
 
     // create input readers
     int bytesReservedForParentId = bytesReservedForIdByEntityId.get(parentEntity.getId());
+    _threadPool = Executors.newCachedThreadPool();
     _parentIdMapDeserializer = new ValueWithIdDeserializer<>(new StringValueConverter(bytesReservedForParentId));
     try {
       _parentIdMapReader = 
@@ -57,8 +59,8 @@ public class IdFilesDumperOneAncestor implements FilesDumper {
               _parentIdMapDeserializer.numBytes(), 
               RECORDS_PER_BUFFER,
               _parentIdMapDeserializer::fromBytes,
-              THREAD_POOL,
-              THREAD_POOL);
+              _threadPool, // A shared thread pool can be used here for deserialization and file I/O.
+              _threadPool);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -93,6 +95,7 @@ public class IdFilesDumperOneAncestor implements FilesDumper {
     _parentIdMapReader.close();
     _idsMapWriter.close();
     _ancestorsWriter.close();
+    _threadPool.shutdown();
   }
   
   /* advance parent streams to our current ID (if needed)

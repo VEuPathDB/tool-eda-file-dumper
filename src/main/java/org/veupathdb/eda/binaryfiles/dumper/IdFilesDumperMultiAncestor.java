@@ -29,7 +29,6 @@ import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager.Ope
  *
  */
 public class IdFilesDumperMultiAncestor implements FilesDumper {
-  private static final ExecutorService THREAD_POOL = Executors.newCachedThreadPool();
   private static final int RECORDS_PER_BUFFER = 100;
   private final static int ID_COLUMN_INDEX = 0;  // the position in tabular stream of entity ID
   private final static int PARENT_ID_COLUMN_INDEX = 1; // the position in the tabular stream of the parent's ID
@@ -40,6 +39,7 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
   private final DualBufferBinaryRecordReader<RecordIdValues> _parentIdsMapReader;
   private final BinaryValueWriter<RecordIdValues> _idsMapWriter;
   private final BinaryValueWriter<List<Long>> _ancestorsWriter;
+  private final ExecutorService _threadPool;
   boolean _firstRow = true;
   
   private List<Long> _currentParentAncestorRow;
@@ -47,7 +47,8 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
 
   private AtomicLong _idIndex = new AtomicLong(0);
 
-  public IdFilesDumperMultiAncestor(BinaryFilesManager bfm, Study study, Entity entity, Entity parentEntity, Map<String, Integer> bytesReservedByEntityId) {
+  public IdFilesDumperMultiAncestor(BinaryFilesManager bfm, Study study, Entity entity, Entity parentEntity,
+                                    Map<String, Integer> bytesReservedByEntityId, ExecutorService threadPool) {
     
     int entityAncestorsCount = entity.getAncestorEntities().size();
     int parentEntityAncestorsCount = parentEntity.getAncestorEntities().size();
@@ -57,6 +58,7 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
     if (parentEntityAncestorsCount != entityAncestorsCount-1)
       throw new IllegalArgumentException("Parent entity must have one fewer ancestors than entity.");
 
+    _threadPool = Executors.newCachedThreadPool();
     // create input readers
     _parentAncestorsDeserializer = new ListConverter<>(new LongValueConverter(), entity.getAncestorEntities().size());
     _parentIdValuesDeserializer = new RecordIdValuesConverter(parentEntity, bytesReservedByEntityId);
@@ -68,8 +70,8 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
               _parentAncestorsDeserializer.numBytes(),
               RECORDS_PER_BUFFER,
               _parentAncestorsDeserializer::fromBytes,
-              THREAD_POOL,
-              THREAD_POOL);
+              _threadPool,
+              _threadPool);
       
       _parentIdsMapReader = 
           new DualBufferBinaryRecordReader<>(
@@ -77,8 +79,8 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
               _parentIdValuesDeserializer.numBytes(),
               RECORDS_PER_BUFFER,
               _parentIdValuesDeserializer::fromBytes,
-              THREAD_POOL,
-              THREAD_POOL);
+              _threadPool,
+              _threadPool);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -114,6 +116,7 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
     _parentIdsMapReader.close();
     _idsMapWriter.close();
     _ancestorsWriter.close();
+    _threadPool.shutdown();
   }
   
   /* advance parent streams to our current ID (if needed)

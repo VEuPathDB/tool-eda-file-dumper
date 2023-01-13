@@ -25,8 +25,6 @@ import org.veupathdb.service.eda.ss.model.variable.VariableWithValues;
 public class StudyDumper {
   private static final int INDEX_OF_ID = 0;
   private static final Logger LOG = LogManager.getLogger(StudyDumper.class);
-  public static final String META_KEY_MAX_LENGTH = "maxLength";
-  public static final String META_KEY_VAR_TYPE = "type";
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private final DataSource _dataSource;
@@ -58,7 +56,7 @@ public class StudyDumper {
 
     // Find the maximum length of an ID for this entity to determine space to allocate for each ID.
     // Add 4 to store the size of the ID as well.
-    int maxIdLength = scanForMaxLength(entity, null);
+    int maxIdLength = scanForMaxLength(entity);
 
     // Add the value to the Map so that it is available when dumping subtrees recursively.
     entityIdToMaxIdLength.put(entity.getId(), maxIdLength);
@@ -120,6 +118,11 @@ public class StudyDumper {
           variable.map(var -> var.getId()).orElse("none"), e);
       // TODO Remove this exception swallowing once long free-text variables are accounted for.
     }
+  }
+
+
+  private int scanForMaxLength(Entity entity) {
+    return scanForMaxLength(entity, null);
   }
 
   private int scanForMaxLength(Entity entity, VariableWithValues variable) {

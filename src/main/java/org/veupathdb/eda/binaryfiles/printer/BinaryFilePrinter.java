@@ -24,7 +24,6 @@ import org.veupathdb.service.eda.ss.model.variable.VariableValueIdPair;
  */
 public class BinaryFilePrinter {
   private static final ExecutorService THREAD_POOL = Executors.newCachedThreadPool();
-
   private static final int RECORDS_PER_BUFFER = 100;
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -124,7 +123,7 @@ public class BinaryFilePrinter {
     BinaryFilesManager.VariableMeta variableMeta = metadata.getVariableMetadata().stream()
         .filter(var -> binaryFile.getFileName().toString().contains(var.getVariableId()))
         .findFirst()
-        .orElseThrow();
+        .orElseThrow(() -> new RuntimeException("Cannot find variable metadata, unable to print variable."));
 
     BinaryConverter<?>converter = getVarType(variableMeta).getConverterSupplier().apply(variableMeta.getProperties());
     ValueWithIdDeserializer<?> varDeserializer = new ValueWithIdDeserializer<>(converter);

@@ -9,13 +9,14 @@ import java.util.List;
 /**
  * ResultConsumer that tracks the longest ID. Returns the max length once the entire result has been consumed.
  */
-public class MaxLengthFinder implements TabularResponses.ResultConsumer { private int maxLength = 0;
+public class MaxLengthFinder implements TabularResponses.ResultConsumer {
+  private int maxLength = 0;
   private boolean done = false;
   private boolean firstRow = true;
-  private int index = 0;
+  private final int index;
 
-  public MaxLengthFinder(int index) {
-    this.index = index;
+  public MaxLengthFinder(int columnIndex) {
+    this.index = columnIndex;
   }
 
   @Override
@@ -24,9 +25,9 @@ public class MaxLengthFinder implements TabularResponses.ResultConsumer { privat
 
     // Number of bytes equals bytes in string plus bytes needed to store string length.
     int numBytes = record.get(index).getBytes(StandardCharsets.UTF_8).length + Integer.BYTES;
-      if (numBytes > maxLength) {
-        maxLength = numBytes;
-      }
+    if (numBytes > maxLength) {
+      maxLength = numBytes;
+    }
   }
 
   @Override
