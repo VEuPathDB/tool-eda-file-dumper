@@ -27,7 +27,7 @@ public interface FilesDumper extends ResultConsumer, AutoCloseable {
       throw new RuntimeException(e);
     }    
   }
-  
+
   default BinaryValueWriter<RecordIdValues> getIdsMapWriter(BinaryFilesManager bfm, Study study, Entity entity, RecordIdValuesConverter idsMapSerializer) {
     final File idMapFile  = bfm.getIdMapFile(study, entity, Operation.WRITE).toFile();
     try {
