@@ -102,7 +102,6 @@ public class StudyDumper {
 
       handleResult(_dataSource, _study, entity, Optional.of(valueVar), () -> new VariableFilesDumper<>(_bfm, _study, entity, valueVar));
       handleResult(_dataSource, _study, entity, Optional.of(valueVar), () -> new VariableFilesStringDumper<>(_bfm, _study, entity, valueVar));
-
     }
     metadata.setVariableMetadata(variableMetadata);
     
