@@ -14,7 +14,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>11</java.version>
-    <jackson.version>2.13.3</jackson.version>
+    <jackson.version>2.13.5</jackson.version>
     <java.main.class>org.veupathdb.eda.binaryfiles.dumper.Main</java.main.class>
   </properties>
 
@@ -31,7 +31,7 @@
     <dependency>
       <groupId>org.veupathdb.eda</groupId>
       <artifactId>lib-eda-subsetting</artifactId>
-      <version>3.8.0</version>
+      <version>3.8.1</version>
     </dependency>
 
     <dependency>
