@@ -129,8 +129,8 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
    */
   private void advanceParentStreams(String parentIdString) {
     while (!parentIdString.equals(_currentParentIdString)) {
+      // remember current parent ID string from parent ids_map file
       if (_parentIdsMapReader.hasNext()) {
-        // remember current parent ID string from parent ids_map file
         RecordIdValues parentIdsMapRow = _parentIdsMapReader.next();
         _currentParentIdString = parentIdsMapRow.getEntityId();
 
