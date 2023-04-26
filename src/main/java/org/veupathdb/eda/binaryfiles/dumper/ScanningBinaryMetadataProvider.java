@@ -43,6 +43,6 @@ public class ScanningBinaryMetadataProvider implements BinaryMetadataProvider {
                 return Optional.of(new EmptyBinaryProperties());
             }
         }
-        return Optional.empty();
+        throw new RuntimeException("Unable to find binary properties for variable without values: " + studyAbbrev + " " + entity.getId() + " " + variableId);
     }
 }
