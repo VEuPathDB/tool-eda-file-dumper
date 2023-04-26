@@ -50,13 +50,13 @@ public class Main {
 
       // Create a variable factory which can provide undecorated study metadata. This is used to provide the necessary
       // metadata to generate binary files.
-      VariableFactory undecoratedVariableFactory = new VariableFactory(dataSource, APP_DB_SCHEMA, new EmptyBinaryMetadataProvider(), binaryFilesManager);
+      VariableFactory undecoratedVariableFactory = new VariableFactory(dataSource, APP_DB_SCHEMA, new EmptyBinaryMetadataProvider(), study -> true);
       StudyFactory undecoratedStudyFactory = new StudyFactory(dataSource, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED, undecoratedVariableFactory);
       Study undecoratedStudy = undecoratedStudyFactory.getStudyById(studyId);
       ScanningBinaryMetadataProvider metadataProvider = new ScanningBinaryMetadataProvider(undecoratedStudy, dataSource, APP_DB_SCHEMA);
 
       // Create variable and study factories used to provide binary encoding metadata.
-      VariableFactory metadataDecoratedStudyFactory = new VariableFactory(dataSource, APP_DB_SCHEMA, metadataProvider, binaryFilesManager);
+      VariableFactory metadataDecoratedStudyFactory = new VariableFactory(dataSource, APP_DB_SCHEMA, metadataProvider, study -> true);
       StudyFactory studyFactory = new StudyFactory(dataSource, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED, metadataDecoratedStudyFactory);
       Study study = studyFactory.getStudyById(studyId);
       
