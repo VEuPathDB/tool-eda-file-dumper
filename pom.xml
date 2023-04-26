@@ -31,13 +31,13 @@
     <dependency>
       <groupId>org.veupathdb.eda</groupId>
       <artifactId>lib-eda-subsetting</artifactId>
-      <version>4.0.0</version>
+      <version>4.0.1</version>
     </dependency>
 
     <dependency>
       <groupId>org.gusdb</groupId>
       <artifactId>fgputil-db</artifactId>
-      <version>2.12.3-jakarta</version>
+      <version>2.12.0-jakarta</version>
     </dependency>
 
     <!-- Runtime dependency on Oracle driver -->
