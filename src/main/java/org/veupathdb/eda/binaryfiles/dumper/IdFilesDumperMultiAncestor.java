@@ -128,11 +128,11 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
    *   - globally remember parent id string and ancestor file row
    */
   private void advanceParentStreams(String parentIdString) {
-    
+    List<String> idsPassed = new ArrayList<>();
     while (!parentIdString.equals(_currentParentIdString)) {
-      
-      // remember current parent ID string from parent ids_map file
+      idsPassed.add(_currentParentIdString);
       if (_parentIdsMapReader.hasNext()) {
+        // remember current parent ID string from parent ids_map file
         RecordIdValues parentIdsMapRow = _parentIdsMapReader.next();
         _currentParentIdString = parentIdsMapRow.getEntityId();
 
@@ -140,12 +140,12 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
         _currentParentAncestorRow = _parentAncestorsReader.next();
 
         // validate, for the heck of it
-        Long L = Long.valueOf(parentIdsMapRow.getIdIndex());
+        Long L = parentIdsMapRow.getIdIndex();
         if (!L.equals(_currentParentAncestorRow.get(ID_COLUMN_INDEX))) {
           throw new RuntimeException("Unexpected parent idIndex.  idMap: " + parentIdsMapRow.getIdIndex() + " ancestor: " + _currentParentAncestorRow.get(ID_COLUMN_INDEX));
         }
       } else {
-        throw new RuntimeException("Exhausted ancestor stream before finding parent ID: " + parentIdString + ". Parent entity: " + _parentEntity.getId());
+        throw new RuntimeException("Exhausted ancestor stream before finding parent ID: " + parentIdString + ". Parent entity: " + _parentEntity.getId() + ". IDs passed! " + idsPassed);
       }
     }
   }

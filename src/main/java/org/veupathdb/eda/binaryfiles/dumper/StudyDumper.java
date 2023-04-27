@@ -111,7 +111,9 @@ public class StudyDumper {
   }
 
   private void handleResult(DataSource ds, Study study, Entity entity, Optional<VariableWithValues> variable, Supplier<FilesDumper> dumperSupplier) {
-    List<VariableWithValues> vars = variable.map(List::of).orElse(Collections.emptyList());
+    List<VariableWithValues> vars = variable
+        .map(List::of)
+        .orElse(Collections.emptyList());
     try (FilesDumper dumper = dumperSupplier.get()) {
       FilteredResultFactory.produceTabularSubset(ds, _appDbSchema, study, entity, vars, List.of(), new TabularReportConfig(), dumper);
     }
