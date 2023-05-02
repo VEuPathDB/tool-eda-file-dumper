@@ -144,7 +144,7 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
           throw new RuntimeException("Unexpected parent idIndex.  idMap: " + parentIdsMapRow.getIdIndex() + " ancestor: " + _currentParentAncestorRow.get(ID_COLUMN_INDEX));
         }
       } else {
-        throw new RuntimeException("Exhausted ancestor stream before finding parent ID: " + parentIdString + ". Parent entity: " + _parentEntity.getId() + ". IDs passed! " + idsPassed);
+        throw new RuntimeException("Exhausted ancestor stream before finding parent ID: " + parentIdString + ". Parent entity: " + _parentEntity.getId());
       }
     }
   }
