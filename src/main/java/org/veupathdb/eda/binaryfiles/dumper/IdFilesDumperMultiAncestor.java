@@ -40,6 +40,7 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
   private final BinaryValueWriter<RecordIdValues> _idsMapWriter;
   private final BinaryValueWriter<List<Long>> _ancestorsWriter;
   private final ExecutorService _threadPool;
+  private final Entity _parentEntity;
   boolean _firstRow = true;
   
   private List<Long> _currentParentAncestorRow;
@@ -49,7 +50,7 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
 
   public IdFilesDumperMultiAncestor(BinaryFilesManager bfm, Study study, Entity entity, Entity parentEntity,
                                     Map<String, Integer> bytesReservedByEntityId, ExecutorService threadPool) {
-    
+    _parentEntity = parentEntity;
     int entityAncestorsCount = entity.getAncestorEntities().size();
     int parentEntityAncestorsCount = parentEntity.getAncestorEntities().size();
 
@@ -127,23 +128,24 @@ public class IdFilesDumperMultiAncestor implements FilesDumper {
    *   - globally remember parent id string and ancestor file row
    */
   private void advanceParentStreams(String parentIdString) {
-    
     while (!parentIdString.equals(_currentParentIdString)) {
-      
-      // remember current parent ID string from parent ids_map file
-      RecordIdValues parentIdsMapRow =
-          _parentIdsMapReader
-          .next();
-      _currentParentIdString = parentIdsMapRow.getEntityId();
-      
-      // remember current parent ancestor file row
-      _currentParentAncestorRow = _parentAncestorsReader.next();
+      if (_parentIdsMapReader.hasNext()) {
+        // remember current parent ID string from parent ids_map file
+        RecordIdValues parentIdsMapRow = _parentIdsMapReader.next();
+        _currentParentIdString = parentIdsMapRow.getEntityId();
 
-      // validate, for the heck of it
-      Long L = Long.valueOf(parentIdsMapRow.getIdIndex());
-      if (!L.equals(_currentParentAncestorRow.get(ID_COLUMN_INDEX)))
-        throw new RuntimeException("Unexpected parent idIndex.  idMap: " + parentIdsMapRow.getIdIndex() + " ancestor: " + _currentParentAncestorRow.get(ID_COLUMN_INDEX));
-    }   
+        // remember current parent ancestor file row
+        _currentParentAncestorRow = _parentAncestorsReader.next();
+
+        // validate, for the heck of it
+        Long L = parentIdsMapRow.getIdIndex();
+        if (!L.equals(_currentParentAncestorRow.get(ID_COLUMN_INDEX))) {
+          throw new RuntimeException("Unexpected parent idIndex.  idMap: " + parentIdsMapRow.getIdIndex() + " ancestor: " + _currentParentAncestorRow.get(ID_COLUMN_INDEX));
+        }
+      } else {
+        throw new RuntimeException("Exhausted ancestor stream before finding parent ID: " + parentIdString + ". Parent entity: " + _parentEntity.getId());
+      }
+    }
   }
 
 }
