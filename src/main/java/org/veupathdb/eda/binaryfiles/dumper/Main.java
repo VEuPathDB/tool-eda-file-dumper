@@ -1,11 +1,19 @@
 package org.veupathdb.eda.binaryfiles.dumper;
 
-import static org.gusdb.fgputil.runtime.Environment.getRequiredVar;
+//import static org.gusdb.fgputil.runtime.Environment.getRequiredVar;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.NoSuchFileException;
+
 import javax.sql.DataSource;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.gusdb.fgputil.db.platform.SupportedPlatform;
 import org.gusdb.fgputil.db.pool.DatabaseInstance;
@@ -24,22 +32,24 @@ public class Main {
 
   public static void main(String[] args) throws Exception {
 
-    if (args.length != 2) {
-      System.err.println("USAGE: dumpFiles <studyId> <parentDirectory>");
+    if (args.length != 3) {
+      System.err.println("USAGE: dumpFiles <studyId> <parentDirectory> <gusConfigFile");
       System.exit(1);
     }
 
     String studyId = args[0];
     Path studiesDirectory = Paths.get(args[1]);
+    Path gusConfigFile = Paths.get(args[2]);
 
     if (!Files.isDirectory(studiesDirectory) || !Files.isWritable(studiesDirectory)) {
       throw new IllegalArgumentException(studiesDirectory.toAbsolutePath() + " is not a writable directory.");
     }
 
-    // read required environment vars
-    String connectionUrl = getRequiredVar("APPDB_CONNECT");
-    String connectionUser = getRequiredVar("APPDB_USER");
-    String connectionPassword = getRequiredVar("APPDB_PASS");
+    Map<String, String> gusConfig = parseConfig(gusConfigFile);
+
+    String connectionUrl = gusConfig.get("jdbcDsn");
+    String connectionUser = gusConfig.get("databaseLogin");
+    String connectionPassword = gusConfig.get("databasePassword");
 
     final BinaryFilesManager binaryFilesManager = new BinaryFilesManager(studiesDirectory);
 
@@ -64,4 +74,32 @@ public class Main {
       studyDumper.dumpStudy();
     }
   }
+
+  public static Map<String, String> parseConfig(Path filePath) {
+    Map<String, String> config = new HashMap<>();
+
+    try (BufferedReader br = Files.newBufferedReader(filePath)) {
+      String line;
+      while ((line = br.readLine()) != null) {
+        if(line.startsWith("#")) {
+          continue;
+        }
+
+        String[] ar = line.split("=");
+        if (ar.length == 2) {
+          config.put(ar[0], ar[1]);
+        }
+      }
+    }
+    catch (NoSuchFileException e) {
+      throw new RuntimeException("File not found: " + filePath);
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+      throw new RuntimeException("Error Reading File:" + filePath);
+    }
+
+    return config;
+  }
+
 }
