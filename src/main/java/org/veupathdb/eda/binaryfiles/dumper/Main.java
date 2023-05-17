@@ -5,13 +5,13 @@ package org.veupathdb.eda.binaryfiles.dumper;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.NoSuchFileException;
 
 import javax.sql.DataSource;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Properties;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,17 +39,23 @@ public class Main {
 
     String studyId = args[0];
     Path studiesDirectory = Paths.get(args[1]);
-    Path gusConfigFile = Paths.get(args[2]);
+    String gusConfigFile = args[2];
 
     if (!Files.isDirectory(studiesDirectory) || !Files.isWritable(studiesDirectory)) {
       throw new IllegalArgumentException(studiesDirectory.toAbsolutePath() + " is not a writable directory.");
     }
 
-    Map<String, String> gusConfig = parseConfig(gusConfigFile);
+    Properties props = new Properties();
+    try {
+      props.load(new FileInputStream(gusConfigFile));
+    }
+    catch (IOException e) {
+      throw new RuntimeException("Error Reading File:" + gusConfigFile, e);
+    }
 
-    String connectionUrl = gusConfig.get("jdbcDsn");
-    String connectionUser = gusConfig.get("databaseLogin");
-    String connectionPassword = gusConfig.get("databasePassword");
+    String connectionUrl = props.getProperty("jdbcDsn");
+    String connectionUser = props.getProperty("databaseLogin");
+    String connectionPassword = props.getProperty("databasePassword");
 
     final BinaryFilesManager binaryFilesManager = new BinaryFilesManager(studiesDirectory);
 
@@ -74,32 +80,4 @@ public class Main {
       studyDumper.dumpStudy();
     }
   }
-
-  public static Map<String, String> parseConfig(Path filePath) {
-    Map<String, String> config = new HashMap<>();
-
-    try (BufferedReader br = Files.newBufferedReader(filePath)) {
-      String line;
-      while ((line = br.readLine()) != null) {
-        if(line.startsWith("#")) {
-          continue;
-        }
-
-        String[] ar = line.split("=");
-        if (ar.length == 2) {
-          config.put(ar[0], ar[1]);
-        }
-      }
-    }
-    catch (NoSuchFileException e) {
-      throw new RuntimeException("File not found: " + filePath);
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-      throw new RuntimeException("Error Reading File:" + filePath);
-    }
-
-    return config;
-  }
-
 }
