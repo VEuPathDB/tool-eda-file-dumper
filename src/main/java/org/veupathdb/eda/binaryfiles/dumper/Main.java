@@ -1,11 +1,19 @@
 package org.veupathdb.eda.binaryfiles.dumper;
 
-import static org.gusdb.fgputil.runtime.Environment.getRequiredVar;
+//import static org.gusdb.fgputil.runtime.Environment.getRequiredVar;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
 import javax.sql.DataSource;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import org.gusdb.fgputil.db.platform.SupportedPlatform;
 import org.gusdb.fgputil.db.pool.DatabaseInstance;
@@ -24,22 +32,30 @@ public class Main {
 
   public static void main(String[] args) throws Exception {
 
-    if (args.length != 2) {
-      System.err.println("USAGE: dumpFiles <studyId> <parentDirectory>");
+    if (args.length != 3) {
+      System.err.println("USAGE: dumpFiles <studyId> <parentDirectory> <gusConfigFile");
       System.exit(1);
     }
 
     String studyId = args[0];
     Path studiesDirectory = Paths.get(args[1]);
+    String gusConfigFile = args[2];
 
     if (!Files.isDirectory(studiesDirectory) || !Files.isWritable(studiesDirectory)) {
       throw new IllegalArgumentException(studiesDirectory.toAbsolutePath() + " is not a writable directory.");
     }
 
-    // read required environment vars
-    String connectionUrl = getRequiredVar("APPDB_CONNECT");
-    String connectionUser = getRequiredVar("APPDB_USER");
-    String connectionPassword = getRequiredVar("APPDB_PASS");
+    Properties props = new Properties();
+    try {
+      props.load(new FileInputStream(gusConfigFile));
+    }
+    catch (IOException e) {
+      throw new RuntimeException("Error Reading File:" + gusConfigFile, e);
+    }
+
+    String connectionUrl = props.getProperty("jdbcDsn");
+    String connectionUser = props.getProperty("databaseLogin");
+    String connectionPassword = props.getProperty("databasePassword");
 
     final BinaryFilesManager binaryFilesManager = new BinaryFilesManager(studiesDirectory);
 
