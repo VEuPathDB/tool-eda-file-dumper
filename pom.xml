@@ -31,7 +31,7 @@
     <dependency>
       <groupId>org.veupathdb.eda</groupId>
       <artifactId>lib-eda-subsetting</artifactId>
-      <version>4.9.3-no-collection-validation</version>
+      <version>4.9.4-no-collection-validation</version>
     </dependency>
 
     <dependency>
