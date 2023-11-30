@@ -77,9 +77,9 @@ public class VariableFilesStringDumper<T> implements FilesDumper {
       Double d = Double.valueOf(row.get(_valColumnIndex));
       BigDecimal bd = BigDecimal.valueOf(d);
       LongitudeVariable var = (LongitudeVariable) _valueVar;
-      bd = bd.setScale(Math.min(bd.precision() - 1, var.getPrecision().intValue() - 2), RoundingMode.HALF_UP);
-      if (bd.precision() == var.getPrecision().intValue() - 2) {
-        LOG.info("Writing max precision: " + var.getId() + " " + d);
+      BigDecimal scaledBd = bd.setScale(Math.min(bd.precision() - 1, var.getPrecision().intValue() - 2), RoundingMode.HALF_UP);
+      if (scaledBd.precision() == var.getPrecision().intValue() - 2) {
+        LOG.info("Writing max precision: " + var.getId() + " " + d + " scaled " + scaledBd);
       }
       _varFileWriter.writeValue(new VariableValueIdPair<>(idIndex, bd.toString()));
     } else {
