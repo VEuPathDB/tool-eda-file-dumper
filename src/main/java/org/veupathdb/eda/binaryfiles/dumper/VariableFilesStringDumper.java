@@ -1,5 +1,7 @@
 package org.veupathdb.eda.binaryfiles.dumper;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.veupathdb.eda.binaryfiles.BinaryValueWriter;
 import org.veupathdb.service.eda.ss.model.Entity;
@@ -17,11 +19,14 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class VariableFilesStringDumper<T> implements FilesDumper {
+  private static final Logger LOG = LogManager.getLogger(VariableFilesStringDumper.class);
+
   private BinaryValueWriter<VariableValueIdPair<String>> _varFileWriter;
   private AtomicLong _idIndex = new AtomicLong(0);
   private final VariableWithValues<T> _valueVar;
   private final int _valColumnIndex;  // the position in the tabular stream of the var value
   private boolean _firstRow = true;
+  private final int maxLen;
 
   public VariableFilesStringDumper(BinaryFilesManager bfm, Study study, Entity entity, VariableWithValues<T> valueVar) {
     _valueVar = valueVar;
@@ -29,6 +34,7 @@ public class VariableFilesStringDumper<T> implements FilesDumper {
     try {
       final OutputStream outputStream = new FileOutputStream(varFile);
       final BinarySerializer<VariableValueIdPair<String>> valueWithIdSerializer = new ValueWithIdSerializer<>(_valueVar.getStringConverter());
+      maxLen = valueWithIdSerializer.numBytes() - 8;
       _varFileWriter = new BinaryValueWriter<>(outputStream, valueWithIdSerializer);
       _valColumnIndex = entity.getAncestorEntities().size() + 1;  // row has ancestor IDs followed by this entity's ID, then value
     } catch (FileNotFoundException e) {
@@ -60,6 +66,9 @@ public class VariableFilesStringDumper<T> implements FilesDumper {
   }
 
   private void writeSingleValue(List<String> row, Long idIndex) {
+    if (row.get(_valColumnIndex).length() > maxLen - 4) {
+      LOG.error("Failed to dump " + row + " var " + _valueVar.getId());
+    }
     _varFileWriter.writeValue(new VariableValueIdPair<>(idIndex, row.get(_valColumnIndex)));
   }
 }

@@ -33,7 +33,7 @@ public class Main {
   public static void main(String[] args) throws Exception {
 
     if (args.length != 3) {
-      System.err.println("USAGE: dumpFiles <studyId> <parentDirectory> <gusConfigFile");
+      System.err.println("USAGE: dumpFiles <studyId> <parentDirectory> <gusConfigFile>");
       System.exit(1);
     }
 
