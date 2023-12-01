@@ -99,7 +99,7 @@ public class BinaryFilePrinter {
 
     try (DualBufferBinaryRecordReader<RecordIdValues> reader =
              new DualBufferBinaryRecordReader<>(binaryFile, converter.numBytes(), RECORDS_PER_BUFFER, converter::fromBytes,
-                 THREAD_POOL, THREAD_POOL)){
+                 Executors.newCachedThreadPool(), Executors.newCachedThreadPool())) {
 
       while (true) {
         if (!reader.hasNext())
