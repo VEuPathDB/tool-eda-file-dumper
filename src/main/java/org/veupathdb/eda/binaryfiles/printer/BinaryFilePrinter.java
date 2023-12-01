@@ -125,9 +125,16 @@ public class BinaryFilePrinter {
         .findFirst()
         .orElseThrow(() -> new RuntimeException("Cannot find variable metadata, unable to print variable."));
 
-    BinaryConverter<?>converter = getVarType(variableMeta).getConverterSupplier().apply(variableMeta.getProperties());
+    BinaryConverter<?> converter;
+
+    if (getVarType(variableMeta) == VariableType.LONGITUDE && binaryFile.endsWith("utf8")) {
+      converter = new StringValueConverter(Integer.BYTES + 2 + 7);
+
+    } else {
+      converter = getVarType(variableMeta).getConverterSupplier().apply(variableMeta.getProperties());
+    }
     ValueWithIdDeserializer<?> varDeserializer = new ValueWithIdDeserializer<>(converter);
-    
+
     try (DualBufferBinaryRecordReader<VariableValueIdPair<?>> varReader = new DualBufferBinaryRecordReader<>(binaryFile,
         varDeserializer.numBytes(), RECORDS_PER_BUFFER, varDeserializer::fromBytes, THREAD_POOL, THREAD_POOL)){
 
