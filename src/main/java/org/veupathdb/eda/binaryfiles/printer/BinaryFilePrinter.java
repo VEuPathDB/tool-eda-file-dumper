@@ -128,7 +128,7 @@ public class BinaryFilePrinter {
     BinaryConverter<?> converter;
 
     if (getVarType(variableMeta) == VariableType.LONGITUDE && binaryFile.endsWith("utf8")) {
-      converter = new StringValueConverter(Integer.BYTES + 2 + 7);
+      converter = new StringValueConverter(Integer.BYTES + 3 + 7);
 
     } else {
       converter = getVarType(variableMeta).getConverterSupplier().apply(variableMeta.getProperties());
