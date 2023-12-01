@@ -128,6 +128,8 @@ public class BinaryFilePrinter {
     BinaryConverter<?> converter;
 
     System.out.println(getVarType(variableMeta));
+    System.out.println(binaryFile.toAbsolutePath().toString());
+
     if (getVarType(variableMeta) == VariableType.LONGITUDE && binaryFile.endsWith("utf8")) {
       converter = new StringValueConverter(14);
     } else {
