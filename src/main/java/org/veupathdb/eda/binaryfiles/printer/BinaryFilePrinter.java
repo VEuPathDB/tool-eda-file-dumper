@@ -57,7 +57,7 @@ public class BinaryFilePrinter {
   }
   
   private static VariableType getVarType(BinaryFilesManager.VariableMeta meta) {
-    return VariableType.fromString(meta.getType());
+    return VariableType.fromString(meta.getType().toLowerCase(Locale.ROOT));
   }
 
   private static void printAncestorFile(Path binaryFile, BinaryFilesManager.Metadata metadata) {
