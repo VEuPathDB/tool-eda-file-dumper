@@ -78,9 +78,9 @@ public class VariableFilesStringDumper<T> implements FilesDumper {
       BigDecimal bd = BigDecimal.valueOf(d);
       LongitudeVariable var = (LongitudeVariable) _valueVar;
 //      LOG.info("Scale " + bd.precision() + " val " + d);
-      if (bd.scale() + 2 > maxLen) {
-        LOG.info("Writing max precision: " + var.getId() + " " + d + " scaled " + bd + " id: " + row.get(0));
-        bd = bd.setScale(bd.scale() - 2);
+      if (bd.scale() > 5) {
+        LOG.warn("Found decimal to round down: " + bd + " scale: " + bd.scale());
+        bd = bd.setScale(4, RoundingMode.HALF_UP);
       }
       _varFileWriter.writeValue(new VariableValueIdPair<>(idIndex, bd.toString()));
     } else {

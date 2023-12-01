@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.veupathdb.service.eda.ss.model.variable.binary.RecordIdValues;
 import org.veupathdb.service.eda.ss.model.variable.binary.RecordIdValuesConverter;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 public class IdsMapConverterTest {
@@ -18,5 +20,13 @@ public class IdsMapConverterTest {
     RecordIdValues converted = idsMapConverter.fromBytes(bytes);
     
     Assertions.assertTrue(idsMap.equals(converted), "Original: " + idsMap + " Converted: " + converted);
+  }
+
+  @Test
+  public void test() {
+    BigDecimal bd = BigDecimal.valueOf(111.123456);
+    System.out.println(bd.scale());
+    System.out.println(bd.setScale(4, RoundingMode.HALF_UP));
+
   }
 }
