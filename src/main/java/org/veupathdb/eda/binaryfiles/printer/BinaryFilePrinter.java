@@ -129,7 +129,7 @@ public class BinaryFilePrinter {
     ValueWithIdDeserializer<?> varDeserializer = new ValueWithIdDeserializer<>(converter);
 
     try (DualBufferBinaryRecordReader<VariableValueIdPair<?>> varReader = new DualBufferBinaryRecordReader<>(binaryFile,
-        varDeserializer.numBytes(), RECORDS_PER_BUFFER, varDeserializer::fromBytes, THREAD_POOL, THREAD_POOL)){
+        varDeserializer.numBytes(), RECORDS_PER_BUFFER, varDeserializer::fromBytes, THREAD_POOL, Executors.newCachedThreadPool())){
 
         while (true) {
           if (!varReader.hasNext()) {
