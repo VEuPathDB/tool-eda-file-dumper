@@ -30,23 +30,23 @@ public class BinaryFilePrinter {
   public static void printBinaryFile(Path binaryFile, Path metajsonFile) {
     BinaryFilesManager.Metadata metadata = readMetaJsonFile(metajsonFile);
     String binaryFileNm = binaryFile.toFile().getName();
-    
+
     switch (binaryFileNm) {
-    case BinaryFilesManager.ANCESTORS_FILE_NAME:
-      printAncestorFile(binaryFile, metadata);
-      break;
-    case BinaryFilesManager.IDS_MAP_FILE_NAME:
-      printIdsMapFile(binaryFile, metadata);
-      break;
-    default:
-      try {
-        printVarFile(binaryFile, metadata);
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+      case BinaryFilesManager.ANCESTORS_FILE_NAME:
+        printAncestorFile(binaryFile, metadata);
+        break;
+      case BinaryFilesManager.IDS_MAP_FILE_NAME:
+        printIdsMapFile(binaryFile, metadata);
+        break;
+      default:
+        try {
+          printVarFile(binaryFile, metadata);
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
     };
   }
-  
+
   private static BinaryFilesManager.Metadata readMetaJsonFile(Path metajsonFile) {
     if (!metajsonFile.toFile().exists()) throw new RuntimeException("metajson file '" + metajsonFile + "' does not exist");
     try {
@@ -55,9 +55,9 @@ public class BinaryFilePrinter {
       throw new RuntimeException("Failed reading meta json file", e);
     }
   }
-  
+
   private static VariableType getVarType(BinaryFilesManager.VariableMeta meta) {
-    return VariableType.fromString(meta.getType().toLowerCase(Locale.ROOT));
+    return VariableType.fromString(meta.getType());
   }
 
   private static void printAncestorFile(Path binaryFile, BinaryFilesManager.Metadata metadata) {
@@ -73,87 +73,85 @@ public class BinaryFilePrinter {
         THREAD_POOL,
         THREAD_POOL)) {
 
-        while (true) {
-          if (!ancestorReader.hasNext()) {
-            break;
-          }
-          List<Long> ancestorRow = ancestorReader.next();
+      while (true) {
+        if (!ancestorReader.hasNext()) {
+          break;
+        }
+        List<Long> ancestorRow = ancestorReader.next();
 
-          String text = ancestorRow.stream()
+        String text = ancestorRow.stream()
             .map(n -> String.valueOf(n))
             .collect(Collectors.joining("\t"));
-        
-          System.out.println(text);
-        }
 
-      } catch (IOException e) {
+        System.out.println(text);
+      }
+
+    } catch (IOException e) {
       throw new RuntimeException("Failed attempting to read file " + binaryFile, e);
     }
   }
-  
+
   private static void printIdsMapFile(Path binaryFile, BinaryFilesManager.Metadata metadata) {
     List<Integer> bytesReservedPerAncestors = metadata.getBytesReservedPerAncestor();
     int bytesReservedForId = metadata.getBytesReservedForId();
 
     RecordIdValuesConverter converter = new RecordIdValuesConverter(bytesReservedPerAncestors, bytesReservedForId);
-    
+
     try (DualBufferBinaryRecordReader<RecordIdValues> reader =
-        new DualBufferBinaryRecordReader<>(binaryFile, converter.numBytes(), RECORDS_PER_BUFFER, converter::fromBytes,
-                THREAD_POOL, THREAD_POOL)){
+             new DualBufferBinaryRecordReader<>(binaryFile, converter.numBytes(), RECORDS_PER_BUFFER, converter::fromBytes,
+                 THREAD_POOL, THREAD_POOL)){
 
-        while (true) {
-          if (!reader.hasNext())
-            break;
+      while (true) {
+        if (!reader.hasNext())
+          break;
 
-          RecordIdValues idsMapRow = reader.next();
-          List<String> rowStrings = new ArrayList<>();
-          rowStrings.add(Long.toString(idsMapRow.getIdIndex()));
-          rowStrings.add(idsMapRow.getEntityId());
-          rowStrings.addAll(idsMapRow.getAncestorIds());
-        
-          System.out.println(String.join("\t", rowStrings));
-        }
+        RecordIdValues idsMapRow = reader.next();
+        List<String> rowStrings = new ArrayList<>();
+        rowStrings.add(Long.toString(idsMapRow.getIdIndex()));
+        rowStrings.add(idsMapRow.getEntityId());
+        rowStrings.addAll(idsMapRow.getAncestorIds());
 
-      } catch (IOException e) {
+        System.out.println(String.join("\t", rowStrings));
+      }
+
+    } catch (IOException e) {
       throw new RuntimeException("Failed attempting to read file " + binaryFile, e);
     }
-  }    
-  
+  }
+
   private static void printVarFile(Path binaryFile, BinaryFilesManager.Metadata metadata) throws Exception {
     BinaryFilesManager.VariableMeta variableMeta = metadata.getVariableMetadata().stream()
         .filter(var -> binaryFile.getFileName().toString().contains(var.getVariableId()))
         .findFirst()
         .orElseThrow(() -> new RuntimeException("Cannot find variable metadata, unable to print variable."));
 
-    BinaryConverter<?> converter = new StringValueConverter(14);
+    BinaryConverter<?>converter = new StringValueConverter(14);
     ValueWithIdDeserializer<?> varDeserializer = new ValueWithIdDeserializer<>(converter);
 
     try (DualBufferBinaryRecordReader<VariableValueIdPair<?>> varReader = new DualBufferBinaryRecordReader<>(binaryFile,
-        varDeserializer.numBytes(), RECORDS_PER_BUFFER, varDeserializer::fromBytes, THREAD_POOL, Executors.newCachedThreadPool())){
+        varDeserializer.numBytes(), RECORDS_PER_BUFFER, varDeserializer::fromBytes, THREAD_POOL, THREAD_POOL)){
 
-        while (true) {
-          if (!varReader.hasNext()) {
-            break;
-          }
-          VariableValueIdPair<?> varRow = varReader.next();
-          System.out.println("Got next val " + varRow);
+      while (true) {
+        if (!varReader.hasNext())
+          break;
+        VariableValueIdPair<?> varRow = varReader.next();
 
-          // This is a hack to ensure byte arrays get properly encoded before printed.
-          // Calling toString on a byte array will otherwise return address in memory.
-          String strValue = varRow.getValue() instanceof byte[]
-              ? new String((byte[]) varRow.getValue(), StandardCharsets.UTF_8)
-              : varRow.getValue().toString();
+        // This is a hack to ensure byte arrays get properly encoded before printed.
+        // Calling toString on a byte array will otherwise return address in memory.
+        String strValue = varRow.getValue() instanceof byte[]
+            ? new String((byte[]) varRow.getValue(), StandardCharsets.UTF_8)
+            : varRow.getValue().toString();
 
-          String text = varRow.getIdIndex() + "\t" + strValue;
-          System.out.println(text);
-        }
+        String text = varRow.getIdIndex() + "\t" + strValue;
+        System.out.println(text);
+      }
 
-      } catch (IOException e) {
+    } catch (IOException e) {
       throw new RuntimeException("Failed attempting to read file " + binaryFile.toString(), e);
     }
 
   }
-    
+
   public static void main(String[] args) throws Exception {
 
     if (args.length != 2) {
@@ -173,6 +171,6 @@ public class BinaryFilePrinter {
 
     BinaryFilePrinter.printBinaryFile(binaryFilePath, metajsonPath);
   }
-  
+
 }
 
