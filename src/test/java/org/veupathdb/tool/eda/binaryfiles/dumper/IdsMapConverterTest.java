@@ -24,9 +24,11 @@ public class IdsMapConverterTest {
 
   @Test
   public void test() {
-    BigDecimal bd = BigDecimal.valueOf(111.123456);
+//    BigDecimal bd = BigDecimal.valueOf(111.123456);
+    Double d = Double.valueOf("-111.920029");
+    BigDecimal bd = BigDecimal.valueOf(d);
     System.out.println(bd.scale());
-    System.out.println(bd.setScale(4, RoundingMode.HALF_UP));
-
+    bd = bd.setScale(4, RoundingMode.HALF_UP);
+    System.out.println(bd.toPlainString());
   }
 }

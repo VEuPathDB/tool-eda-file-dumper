@@ -76,11 +76,11 @@ public class VariableFilesStringDumper<T> implements FilesDumper {
     if (_valueVar.getType() == VariableType.LONGITUDE) {
       Double d = Double.valueOf(row.get(_valColumnIndex));
       BigDecimal bd = BigDecimal.valueOf(d);
-      LongitudeVariable var = (LongitudeVariable) _valueVar;
 //      LOG.info("Scale " + bd.precision() + " val " + d);
-      if (bd.scale() > 5) {
+      if (bd.scale() > 4) {
         LOG.warn("Found decimal to round down: " + bd + " scale: " + bd.scale());
         bd = bd.setScale(4, RoundingMode.HALF_UP);
+        LOG.warn("Rounded down: " + bd + " scale: " + bd.scale());
       }
       _varFileWriter.writeValue(new VariableValueIdPair<>(idIndex, bd.toString()));
     } else {
