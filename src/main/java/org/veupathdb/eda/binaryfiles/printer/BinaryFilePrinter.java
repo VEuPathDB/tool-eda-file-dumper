@@ -130,12 +130,12 @@ public class BinaryFilePrinter {
     System.out.println(getVarType(variableMeta));
     System.out.println(binaryFile.toAbsolutePath().toString());
 
-    if (getVarType(variableMeta).toString().equalsIgnoreCase("LONGITUDE") && binaryFile.toAbsolutePath().endsWith("utf8")) {
-      System.out.println("Longitude found");
+//    if (getVarType(variableMeta).toString().equalsIgnoreCase("LONGITUDE") && binaryFile.toAbsolutePath().endsWith("utf8")) {
+//      System.out.println("Longitude found");
       converter = new StringValueConverter(14);
-    } else {
-      converter = getVarType(variableMeta).getConverterSupplier().apply(variableMeta.getProperties());
-    }
+//    } else {
+//      converter = getVarType(variableMeta).getConverterSupplier().apply(variableMeta.getProperties());
+//    }
     ValueWithIdDeserializer<?> varDeserializer = new ValueWithIdDeserializer<>(converter);
 
     try (DualBufferBinaryRecordReader<VariableValueIdPair<?>> varReader = new DualBufferBinaryRecordReader<>(binaryFile,
