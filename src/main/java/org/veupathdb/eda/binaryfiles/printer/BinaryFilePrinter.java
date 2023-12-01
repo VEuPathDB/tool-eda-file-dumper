@@ -131,6 +131,7 @@ public class BinaryFilePrinter {
     System.out.println(binaryFile.toAbsolutePath().toString());
 
     if (getVarType(variableMeta) == VariableType.LONGITUDE && binaryFile.toAbsolutePath().endsWith("utf8")) {
+      System.out.println("Longitude found");
       converter = new StringValueConverter(14);
     } else {
       converter = getVarType(variableMeta).getConverterSupplier().apply(variableMeta.getProperties());
