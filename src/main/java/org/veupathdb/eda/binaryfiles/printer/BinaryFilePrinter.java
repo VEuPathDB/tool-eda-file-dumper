@@ -125,26 +125,18 @@ public class BinaryFilePrinter {
         .findFirst()
         .orElseThrow(() -> new RuntimeException("Cannot find variable metadata, unable to print variable."));
 
-    BinaryConverter<?> converter = new StringValueConverter(14);;
-
-    System.out.println(getVarType(variableMeta));
-    System.out.println(binaryFile.toAbsolutePath().toString());
-
-//    if (getVarType(variableMeta).toString().equalsIgnoreCase("LONGITUDE") && binaryFile.toAbsolutePath().endsWith("utf8")) {
-//      System.out.println("Longitude found");
-//      converter
-//    } else {
-//      converter = getVarType(variableMeta).getConverterSupplier().apply(variableMeta.getProperties());
-//    }
+    BinaryConverter<?> converter = new StringValueConverter(14);
     ValueWithIdDeserializer<?> varDeserializer = new ValueWithIdDeserializer<>(converter);
 
     try (DualBufferBinaryRecordReader<VariableValueIdPair<?>> varReader = new DualBufferBinaryRecordReader<>(binaryFile,
         varDeserializer.numBytes(), RECORDS_PER_BUFFER, varDeserializer::fromBytes, THREAD_POOL, THREAD_POOL)){
 
         while (true) {
-          if (!varReader.hasNext())
+          if (!varReader.hasNext()) {
             break;
+          }
           VariableValueIdPair<?> varRow = varReader.next();
+          System.out.println("Got next val " + varRow);
 
           // This is a hack to ensure byte arrays get properly encoded before printed.
           // Calling toString on a byte array will otherwise return address in memory.
