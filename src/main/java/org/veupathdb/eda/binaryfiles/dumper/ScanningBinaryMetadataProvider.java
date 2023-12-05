@@ -35,10 +35,12 @@ public class ScanningBinaryMetadataProvider implements BinaryMetadataProvider {
                 .orElseThrow();
         if (var instanceof VariableWithValues) {
             VariableWithValues varWithValues = (VariableWithValues) var;
-            if (varWithValues.getType() == VariableType.STRING) {
+            if (varWithValues.getType() == VariableType.LONGITUDE
+                || varWithValues.getType() == VariableType.NUMBER
+                || varWithValues.getType() == VariableType.STRING) {
                 final MaxLengthFinder maxLengthFinder = new MaxLengthFinder(fullyPopulatedEntity.getAncestorEntities().size() + 1);
                 FilteredResultFactory.produceTabularSubset(dataSource, schema, study, fullyPopulatedEntity, List.of(varWithValues), List.of(), new TabularReportConfig(), maxLengthFinder);
-                return Optional.of(new StringVariable.StringBinaryProperties(maxLengthFinder.getMaxLength()));
+                return Optional.of(new Utf8EncodingLengthProperties(maxLengthFinder.getMaxLength()));
             } else {
                 return Optional.of(new EmptyBinaryProperties());
             }

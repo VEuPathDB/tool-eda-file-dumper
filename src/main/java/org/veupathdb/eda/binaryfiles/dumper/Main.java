@@ -1,6 +1,5 @@
 package org.veupathdb.eda.binaryfiles.dumper;
 
-//import static org.gusdb.fgputil.runtime.Environment.getRequiredVar;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,9 +11,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.gusdb.fgputil.db.platform.SupportedPlatform;
 import org.gusdb.fgputil.db.pool.DatabaseInstance;
 import org.gusdb.fgputil.db.pool.SimpleDbConfig;
@@ -23,7 +19,6 @@ import org.veupathdb.service.eda.ss.model.StudyOverview;
 import org.veupathdb.service.eda.ss.model.db.StudyFactory;
 import org.veupathdb.service.eda.ss.model.db.VariableFactory;
 import org.veupathdb.service.eda.ss.model.reducer.EmptyBinaryMetadataProvider;
-import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager;
 
 
 public class Main {
@@ -32,14 +27,15 @@ public class Main {
 
   public static void main(String[] args) throws Exception {
 
-    if (args.length != 3) {
-      System.err.println("USAGE: dumpFiles <studyId> <parentDirectory> <gusConfigFile");
+    if (args.length != 4) {
+      System.err.println("USAGE: dumpFiles <studyId> <parentDirectory> <gusConfigFile> <dataVersion>");
       System.exit(1);
     }
 
     String studyId = args[0];
     Path studiesDirectory = Paths.get(args[1]);
     String gusConfigFile = args[2];
+    String version = args[3];
 
     if (!Files.isDirectory(studiesDirectory) || !Files.isWritable(studiesDirectory)) {
       throw new IllegalArgumentException(studiesDirectory.toAbsolutePath() + " is not a writable directory.");
@@ -56,8 +52,6 @@ public class Main {
     String connectionUrl = props.getProperty("jdbcDsn");
     String connectionUser = props.getProperty("databaseLogin");
     String connectionPassword = props.getProperty("databasePassword");
-
-    final BinaryFilesManager binaryFilesManager = new BinaryFilesManager(studiesDirectory);
 
     // instantiate a connection to the database
     try (DatabaseInstance dbInstance = new DatabaseInstance(SimpleDbConfig.create(
