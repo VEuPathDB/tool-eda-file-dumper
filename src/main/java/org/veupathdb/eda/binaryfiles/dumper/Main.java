@@ -27,15 +27,14 @@ public class Main {
 
   public static void main(String[] args) throws Exception {
 
-    if (args.length != 4) {
-      System.err.println("USAGE: dumpFiles <studyId> <parentDirectory> <gusConfigFile> <dataVersion>");
+    if (args.length != 3) {
+      System.err.println("USAGE: dumpFiles <studyId> <parentDirectory> <gusConfigFile>");
       System.exit(1);
     }
 
     String studyId = args[0];
     Path studiesDirectory = Paths.get(args[1]);
     String gusConfigFile = args[2];
-    String version = args[3];
 
     if (!Files.isDirectory(studiesDirectory) || !Files.isWritable(studiesDirectory)) {
       throw new IllegalArgumentException(studiesDirectory.toAbsolutePath() + " is not a writable directory.");
