@@ -3,6 +3,8 @@ package org.veupathdb.eda.binaryfiles.dumper;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -48,7 +50,7 @@ public class StudyDumper {
     
     // Root study gets a special IDs file dumper (doesn't need parent ancestors)
     dumpSubtree(entityTree, new IdFilesDumperFactory(_bfm, _study, rootEntity, null), new HashMap<>());
-    writeDoneFile(_bfm.getStudyDir(_study, Operation.READ), _study.getLastModified().toInstant().toString());
+    writeDoneFile(_bfm.getStudyDir(_study, Operation.READ), _study.getLastModified().getTime());
   }
 
   private void dumpSubtree(TreeNode<Entity> subTree, IdFilesDumperFactory idDumperFactory, Map<String, Integer> entityIdToMaxIdLength) {
@@ -106,7 +108,7 @@ public class StudyDumper {
     metadata.setVariableMetadata(variableMetadata);
     
     writeMetaJsonFile(metadata, entity);
-    writeDoneFile(_bfm.getEntityDir(_study, entity, Operation.READ), _study.getLastModified().toInstant().toString());
+    writeDoneFile(_bfm.getEntityDir(_study, entity, Operation.READ), _study.getLastModified().getTime());
   }
 
   private void handleResult(DataSource ds, Study study, Entity entity, Optional<VariableWithValues> variable, Supplier<FilesDumper> dumperSupplier) {
@@ -152,10 +154,10 @@ public class StudyDumper {
     }   
   }
   
-  private void writeDoneFile(Path directory, String version) {
+  private void writeDoneFile(Path directory, long version) {
     try (FileWriter writer = 
         new FileWriter(_bfm.getDoneFile(directory, Operation.WRITE).toFile())) {
-      Map<String, String> filesMeta = Map.of("dataVersion", version);
+      Map<String, Long> filesMeta = Map.of("dataVersion", version);
       OBJECT_MAPPER.writeValue(writer, filesMeta);
     } catch (IOException e) {
       throw new RuntimeException("Failed writing DONE file.", e);
