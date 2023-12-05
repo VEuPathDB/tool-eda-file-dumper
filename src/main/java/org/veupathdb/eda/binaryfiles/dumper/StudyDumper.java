@@ -164,5 +164,4 @@ public class StudyDumper {
       throw new RuntimeException("Failed writing DONE file.", e);
     }   
   }
-  
 }

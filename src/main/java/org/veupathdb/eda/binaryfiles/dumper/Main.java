@@ -35,6 +35,7 @@ public class Main {
     String studyId = args[0];
     Path studiesDirectory = Paths.get(args[1]);
     String gusConfigFile = args[2];
+    String version = args[3];
 
     if (!Files.isDirectory(studiesDirectory) || !Files.isWritable(studiesDirectory)) {
       throw new IllegalArgumentException(studiesDirectory.toAbsolutePath() + " is not a writable directory.");
