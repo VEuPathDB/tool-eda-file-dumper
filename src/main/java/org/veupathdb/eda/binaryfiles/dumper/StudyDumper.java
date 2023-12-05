@@ -158,11 +158,9 @@ public class StudyDumper {
         new FileWriter(_bfm.getDoneFile(directory, Operation.WRITE).toFile())) {
       Map<String, String> filesMeta = Map.of("dataVersion", version);
       OBJECT_MAPPER.writeValue(writer, filesMeta);
-      writer.flush();
     } catch (IOException e) {
       throw new RuntimeException("Failed writing DONE file.", e);
     }   
   }
-
   
 }
