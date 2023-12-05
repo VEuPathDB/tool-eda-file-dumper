@@ -48,7 +48,7 @@ public class StudyDumper {
     
     // Root study gets a special IDs file dumper (doesn't need parent ancestors)
     dumpSubtree(entityTree, new IdFilesDumperFactory(_bfm, _study, rootEntity, null), new HashMap<>());
-    writeDoneFile(_bfm.getStudyDir(_study, Operation.READ), _study.getLastModified().toString());
+    writeDoneFile(_bfm.getStudyDir(_study, Operation.READ), _study.getLastModified().toInstant().toString());
   }
 
   private void dumpSubtree(TreeNode<Entity> subTree, IdFilesDumperFactory idDumperFactory, Map<String, Integer> entityIdToMaxIdLength) {
@@ -102,12 +102,11 @@ public class StudyDumper {
 
       handleResult(_dataSource, _study, entity, Optional.of(valueVar), () -> new VariableFilesDumper<>(_bfm, _study, entity, valueVar));
       handleResult(_dataSource, _study, entity, Optional.of(valueVar), () -> new VariableFilesStringDumper<>(_bfm, _study, entity, valueVar));
-
     }
     metadata.setVariableMetadata(variableMetadata);
     
     writeMetaJsonFile(metadata, entity);
-    writeDoneFile(_bfm.getEntityDir(_study, entity, Operation.READ), _study.getLastModified().toString());
+    writeDoneFile(_bfm.getEntityDir(_study, entity, Operation.READ), _study.getLastModified().toInstant().toString());
   }
 
   private void handleResult(DataSource ds, Study study, Entity entity, Optional<VariableWithValues> variable, Supplier<FilesDumper> dumperSupplier) {
