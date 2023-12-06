@@ -3,6 +3,8 @@ package org.veupathdb.eda.binaryfiles.dumper;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -21,6 +23,7 @@ import org.veupathdb.service.eda.ss.model.db.FilteredResultFactory;
 import org.veupathdb.service.eda.ss.model.tabular.TabularReportConfig;
 import org.veupathdb.service.eda.ss.model.variable.Variable;
 import org.veupathdb.service.eda.ss.model.variable.VariableWithValues;
+import org.veupathdb.service.eda.ss.model.variable.binary.DoneMetadata;
 
 public class StudyDumper {
   private static final int INDEX_OF_ID = 0;
@@ -48,7 +51,7 @@ public class StudyDumper {
     
     // Root study gets a special IDs file dumper (doesn't need parent ancestors)
     dumpSubtree(entityTree, new IdFilesDumperFactory(_bfm, _study, rootEntity, null), new HashMap<>());
-    writeDoneFile(_bfm.getStudyDir(_study, Operation.READ));
+    writeDoneFile(_bfm.getStudyDir(_study, Operation.READ), _study.getLastModified().getTime());
   }
 
   private void dumpSubtree(TreeNode<Entity> subTree, IdFilesDumperFactory idDumperFactory, Map<String, Integer> entityIdToMaxIdLength) {
@@ -102,12 +105,11 @@ public class StudyDumper {
 
       handleResult(_dataSource, _study, entity, Optional.of(valueVar), () -> new VariableFilesDumper<>(_bfm, _study, entity, valueVar));
       handleResult(_dataSource, _study, entity, Optional.of(valueVar), () -> new VariableFilesStringDumper<>(_bfm, _study, entity, valueVar));
-
     }
     metadata.setVariableMetadata(variableMetadata);
     
     writeMetaJsonFile(metadata, entity);
-    writeDoneFile(_bfm.getEntityDir(_study, entity, Operation.READ));
+    writeDoneFile(_bfm.getEntityDir(_study, entity, Operation.READ), _study.getLastModified().getTime());
   }
 
   private void handleResult(DataSource ds, Study study, Entity entity, Optional<VariableWithValues> variable, Supplier<FilesDumper> dumperSupplier) {
@@ -153,15 +155,14 @@ public class StudyDumper {
     }   
   }
   
-  private void writeDoneFile(Path directory) {
-    try (FileWriter writer = 
-        new FileWriter(_bfm.getDoneFile(directory, Operation.WRITE).toFile())) {
-      writer.write("");
-      writer.flush();
+  private void writeDoneFile(Path directory, long version) {
+    try (FileWriter writer = new FileWriter(_bfm.getDoneFile(directory, Operation.WRITE).toFile())) {
+      DoneMetadata doneMetadata = new DoneMetadata();
+      doneMetadata.setDataVersion(version);
+      OBJECT_MAPPER.writeValue(writer, doneMetadata);
     } catch (IOException e) {
       throw new RuntimeException("Failed writing DONE file.", e);
     }   
   }
-
   
 }
