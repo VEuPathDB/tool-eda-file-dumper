@@ -31,7 +31,7 @@
     <dependency>
       <groupId>org.veupathdb.eda</groupId>
       <artifactId>lib-eda-subsetting</artifactId>
-      <version>4.13.0</version>
+      <version>4.13.1</version>
     </dependency>
 
     <dependency>

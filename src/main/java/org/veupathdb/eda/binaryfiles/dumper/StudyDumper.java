@@ -23,6 +23,7 @@ import org.veupathdb.service.eda.ss.model.db.FilteredResultFactory;
 import org.veupathdb.service.eda.ss.model.tabular.TabularReportConfig;
 import org.veupathdb.service.eda.ss.model.variable.Variable;
 import org.veupathdb.service.eda.ss.model.variable.VariableWithValues;
+import org.veupathdb.service.eda.ss.model.variable.binary.DoneMetadata;
 
 public class StudyDumper {
   private static final int INDEX_OF_ID = 0;
@@ -155,10 +156,10 @@ public class StudyDumper {
   }
   
   private void writeDoneFile(Path directory, long version) {
-    try (FileWriter writer = 
-        new FileWriter(_bfm.getDoneFile(directory, Operation.WRITE).toFile())) {
-      Map<String, Long> filesMeta = Map.of("dataVersion", version);
-      OBJECT_MAPPER.writeValue(writer, filesMeta);
+    try (FileWriter writer = new FileWriter(_bfm.getDoneFile(directory, Operation.WRITE).toFile())) {
+      DoneMetadata doneMetadata = new DoneMetadata();
+      doneMetadata.setDataVersion(version);
+      OBJECT_MAPPER.writeValue(writer, doneMetadata);
     } catch (IOException e) {
       throw new RuntimeException("Failed writing DONE file.", e);
     }   
