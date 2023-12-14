@@ -15,6 +15,7 @@ import org.gusdb.fgputil.DualBufferBinaryRecordReader;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.veupathdb.service.eda.ss.model.variable.Utf8EncodingLengthProperties;
 import org.veupathdb.service.eda.ss.model.variable.binary.*;
 import org.veupathdb.service.eda.ss.model.variable.VariableType;
 import org.veupathdb.service.eda.ss.model.variable.VariableValueIdPair;
@@ -125,7 +126,20 @@ public class BinaryFilePrinter {
         .findFirst()
         .orElseThrow(() -> new RuntimeException("Cannot find variable metadata, unable to print variable."));
 
-    BinaryConverter<?>converter = getVarType(variableMeta).getConverterSupplier().apply(variableMeta.getProperties());
+    BinaryConverter<?>converter;
+    if (binaryFile.getFileName().toString().contains("utf8")) {
+      if (getVarType(variableMeta) == VariableType.DATE) {
+        converter = new StringValueConverter(24);
+      } else if (variableMeta.getProperties() instanceof Utf8EncodingLengthProperties) {
+        converter = new StringValueConverter(((Utf8EncodingLengthProperties) variableMeta.getProperties()).getMaxLength());
+      } else {
+        // Integers don't have encoding information.
+        converter = new StringValueConverter(5);
+      }
+    } else {
+      converter = getVarType(variableMeta).getConverterSupplier().apply(variableMeta.getProperties());
+    }
+
     ValueWithIdDeserializer<?> varDeserializer = new ValueWithIdDeserializer<>(converter);
     
     try (DualBufferBinaryRecordReader<VariableValueIdPair<?>> varReader = new DualBufferBinaryRecordReader<>(binaryFile,
