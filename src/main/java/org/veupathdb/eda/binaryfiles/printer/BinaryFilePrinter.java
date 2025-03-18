@@ -15,10 +15,10 @@ import org.gusdb.fgputil.DualBufferBinaryRecordReader;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.veupathdb.service.eda.ss.model.variable.Utf8EncodingLengthProperties;
-import org.veupathdb.service.eda.ss.model.variable.binary.*;
-import org.veupathdb.service.eda.ss.model.variable.VariableType;
-import org.veupathdb.service.eda.ss.model.variable.VariableValueIdPair;
+import org.veupathdb.service.eda.subset.model.variable.Utf8EncodingLengthProperties;
+import org.veupathdb.service.eda.subset.model.variable.binary.*;
+import org.veupathdb.service.eda.subset.model.variable.VariableType;
+import org.veupathdb.service.eda.subset.model.variable.VariableValueIdPair;
 
 /*
  * Print to tab delimited text the contents of binary files produced by the eda binary file dumper.

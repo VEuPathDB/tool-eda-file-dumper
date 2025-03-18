@@ -5,12 +5,12 @@ import org.gusdb.fgputil.db.pool.DatabaseInstance;
 import org.gusdb.fgputil.db.pool.SimpleDbConfig;
 import org.veupathdb.eda.binaryfiles.dumper.ScanningBinaryMetadataProvider;
 import org.veupathdb.eda.binaryfiles.dumper.StudyDumper;
-import org.veupathdb.service.eda.ss.model.Study;
-import org.veupathdb.service.eda.ss.model.StudyOverview;
-import org.veupathdb.service.eda.ss.model.db.StudyFactory;
-import org.veupathdb.service.eda.ss.model.db.VariableFactory;
-import org.veupathdb.service.eda.ss.model.reducer.EmptyBinaryMetadataProvider;
-import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager;
+import org.veupathdb.service.eda.subset.model.Study;
+import org.veupathdb.service.eda.subset.model.StudyOverview;
+import org.veupathdb.service.eda.subset.model.db.StudyFactory;
+import org.veupathdb.service.eda.subset.model.db.VariableFactory;
+import org.veupathdb.service.eda.subset.model.reducer.EmptyBinaryMetadataProvider;
+import org.veupathdb.service.eda.subset.model.variable.binary.BinaryFilesManager;
 
 import javax.sql.DataSource;
 
@@ -52,17 +52,17 @@ public class Main {
 
       DataSource ds = appDb.getDataSource();
       VariableFactory undecoratedVarFactory = new VariableFactory(ds, APP_DB_SCHEMA, new EmptyBinaryMetadataProvider(), study -> true);
-      StudyFactory undecoratedStudyFactory = new StudyFactory(ds, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED, undecoratedVarFactory);
+      StudyFactory undecoratedStudyFactory = new StudyFactory(ds, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED, undecoratedVarFactory, true);
 
       for (StudyOverview studyOverview: undecoratedStudyFactory.getStudyOverviews()) {
         Study undecoratedStudy = undecoratedStudyFactory.getStudyById(studyOverview.getStudyId());
-        ScanningBinaryMetadataProvider metadataProvider = new ScanningBinaryMetadataProvider(undecoratedStudy, ds, APP_DB_SCHEMA);
+        ScanningBinaryMetadataProvider metadataProvider = new ScanningBinaryMetadataProvider(undecoratedStudy, appDb, APP_DB_SCHEMA);
         VariableFactory variableFactory = new VariableFactory(ds, APP_DB_SCHEMA, metadataProvider, study -> true);
-        StudyFactory studyFactory = new StudyFactory(ds, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED, variableFactory);
+        StudyFactory studyFactory = new StudyFactory(ds, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED, variableFactory, true);
 
         try {
           Study study = studyFactory.getStudyById(studyOverview.getStudyId());
-          StudyDumper studyDumper = new StudyDumper(ds, APP_DB_SCHEMA, studiesDirectory, study);
+          StudyDumper studyDumper = new StudyDumper(appDb, APP_DB_SCHEMA, studiesDirectory, study);
           studyDumper.dumpStudy();
         } catch (Exception e) {
           e.printStackTrace();
@@ -80,8 +80,9 @@ public class Main {
   }
 
   public static class FailedStudy {
-    private Exception e;
-    private StudyOverview studyOverview;
+
+    private final Exception e;
+    private final StudyOverview studyOverview;
 
     public FailedStudy(Exception e, StudyOverview studyOverview) {
       this.e = e;

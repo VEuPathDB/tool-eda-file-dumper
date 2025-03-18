@@ -2,15 +2,15 @@ package org.veupathdb.eda.binaryfiles.dumper;
 
 import org.json.JSONArray;
 import org.veupathdb.eda.binaryfiles.BinaryValueWriter;
-import org.veupathdb.service.eda.ss.model.Entity;
-import org.veupathdb.service.eda.ss.model.Study;
-import org.veupathdb.service.eda.ss.model.variable.VariableValueIdPair;
-import org.veupathdb.service.eda.ss.model.variable.VariableWithValues;
-import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager;
-import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager.Operation;
-import org.veupathdb.service.eda.ss.model.variable.binary.BinarySerializer;
-import org.veupathdb.service.eda.ss.model.variable.binary.StringValueConverter;
-import org.veupathdb.service.eda.ss.model.variable.binary.ValueWithIdSerializer;
+import org.veupathdb.service.eda.subset.model.Entity;
+import org.veupathdb.service.eda.subset.model.Study;
+import org.veupathdb.service.eda.subset.model.variable.VariableValueIdPair;
+import org.veupathdb.service.eda.subset.model.variable.VariableWithValues;
+import org.veupathdb.service.eda.subset.model.variable.binary.BinaryFilesManager;
+import org.veupathdb.service.eda.subset.model.variable.binary.BinaryFilesManager.Operation;
+import org.veupathdb.service.eda.subset.model.variable.binary.BinarySerializer;
+import org.veupathdb.service.eda.subset.model.variable.binary.StringValueConverter;
+import org.veupathdb.service.eda.subset.model.variable.binary.ValueWithIdSerializer;
 
 import java.io.*;
 import java.util.List;

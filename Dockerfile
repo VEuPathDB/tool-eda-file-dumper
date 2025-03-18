@@ -1,4 +1,4 @@
-FROM maven:3.8.6-jdk-11-slim AS build
+FROM maven:3-amazoncorretto-21-alpine AS build
 
 ARG GITHUB_USER
 ARG GITHUB_TOKEN

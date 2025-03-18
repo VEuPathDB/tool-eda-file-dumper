@@ -8,36 +8,36 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Supplier;
 
-import javax.sql.DataSource;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.gusdb.fgputil.db.pool.DatabaseInstance;
 import org.gusdb.fgputil.functional.TreeNode;
-import org.veupathdb.service.eda.ss.model.tabular.TabularHeaderFormat;
-import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager;
-import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager.Operation;
-import org.veupathdb.service.eda.ss.model.Entity;
-import org.veupathdb.service.eda.ss.model.Study;
-import org.veupathdb.service.eda.ss.model.db.FilteredResultFactory;
-import org.veupathdb.service.eda.ss.model.tabular.TabularReportConfig;
-import org.veupathdb.service.eda.ss.model.variable.Variable;
-import org.veupathdb.service.eda.ss.model.variable.VariableWithValues;
-import org.veupathdb.service.eda.ss.model.variable.binary.DoneMetadata;
+import org.veupathdb.service.eda.subset.model.tabular.TabularHeaderFormat;
+import org.veupathdb.service.eda.subset.model.variable.binary.BinaryFilesManager;
+import org.veupathdb.service.eda.subset.model.variable.binary.BinaryFilesManager.Operation;
+import org.veupathdb.service.eda.subset.model.Entity;
+import org.veupathdb.service.eda.subset.model.Study;
+import org.veupathdb.service.eda.subset.model.db.FilteredResultFactory;
+import org.veupathdb.service.eda.subset.model.tabular.TabularReportConfig;
+import org.veupathdb.service.eda.subset.model.variable.Variable;
+import org.veupathdb.service.eda.subset.model.variable.VariableWithValues;
+import org.veupathdb.service.eda.subset.model.variable.binary.DoneMetadata;
 
 public class StudyDumper {
+
   private static final int INDEX_OF_ID = 0;
   private static final Logger LOG = LogManager.getLogger(StudyDumper.class);
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-  private final DataSource _dataSource;
+  private final DatabaseInstance _db;
   private final Study _study;
   private final Path _studiesDirectory;
   private final String _appDbSchema;
   private final BinaryFilesManager _bfm;
 
-  public StudyDumper(DataSource dataSource, String appDbSchema, Path studiesDirectory, Study study) {
-    _dataSource = dataSource;
+  public StudyDumper(DatabaseInstance db, String appDbSchema, Path studiesDirectory, Study study) {
+    _db = db;
     _appDbSchema = appDbSchema;
     _studiesDirectory = studiesDirectory;
     _study = study;
@@ -88,7 +88,7 @@ public class StudyDumper {
     metadata.setBytesReservedPerAncestor(bytesReservedPerAncestor);
     metadata.setBytesReservedForId(entityIdToMaxIdLength.get(entity.getId()));
     // first select no variables to dump the ID and ancestors files
-    handleResult(_dataSource, _study, entity, Optional.empty(), () -> idDumperFactory.create(entityIdToMaxIdLength));
+    handleResult(_db, _study, entity, Optional.empty(), () -> idDumperFactory.create(entityIdToMaxIdLength));
 
     List<BinaryFilesManager.VariableMeta> variableMetadata = new ArrayList<>();
     // loop through variables, creating a file for each
@@ -103,8 +103,8 @@ public class StudyDumper {
       varMeta.setProperties(valueVar.getBinaryProperties());
       variableMetadata.add(varMeta);
 
-      handleResult(_dataSource, _study, entity, Optional.of(valueVar), () -> new VariableFilesDumper<>(_bfm, _study, entity, valueVar));
-      handleResult(_dataSource, _study, entity, Optional.of(valueVar), () -> new VariableFilesStringDumper<>(_bfm, _study, entity, valueVar));
+      handleResult(_db, _study, entity, Optional.of(valueVar), () -> new VariableFilesDumper<>(_bfm, _study, entity, valueVar));
+      handleResult(_db, _study, entity, Optional.of(valueVar), () -> new VariableFilesStringDumper<>(_bfm, _study, entity, valueVar));
     }
     metadata.setVariableMetadata(variableMetadata);
     
@@ -112,12 +112,12 @@ public class StudyDumper {
     writeDoneFile(_bfm.getEntityDir(_study, entity, Operation.READ), _study.getLastModified().getTime());
   }
 
-  private void handleResult(DataSource ds, Study study, Entity entity, Optional<VariableWithValues> variable, Supplier<FilesDumper> dumperSupplier) {
-    List<VariableWithValues> vars = variable
-        .map(List::of)
+  private void handleResult(DatabaseInstance db, Study study, Entity entity, Optional<VariableWithValues<?>> variable, Supplier<FilesDumper> dumperSupplier) {
+    List<VariableWithValues<?>> vars = variable
+        .<List<VariableWithValues<?>>>map(List::of)
         .orElse(Collections.emptyList());
     try (FilesDumper dumper = dumperSupplier.get()) {
-      FilteredResultFactory.produceTabularSubset(ds, _appDbSchema, study, entity, vars, List.of(), new TabularReportConfig(), dumper);
+      FilteredResultFactory.produceTabularSubset(db, _appDbSchema, study, entity, vars, List.of(), new TabularReportConfig(), dumper);
     }
     catch (Exception e) {
       LOG.warn("Failed to dump files for study: {}, entity: {}, variable: {}", study.getStudyId(), entity.getId(),
@@ -131,14 +131,14 @@ public class StudyDumper {
     return scanForMaxLength(entity, null);
   }
 
-  private int scanForMaxLength(Entity entity, VariableWithValues variable) {
-    List<VariableWithValues> variables = variable == null ? List.of() : List.of(variable);
+  private int scanForMaxLength(Entity entity, VariableWithValues<?> variable) {
+    List<VariableWithValues<?>> variables = variable == null ? List.of() : List.of(variable);
     try {
       final TabularReportConfig reportConfig = new TabularReportConfig();
       reportConfig.setHeaderFormat(TabularHeaderFormat.STANDARD);
       int index = variable == null ? INDEX_OF_ID : entity.getAncestorEntities().size() + 1;
       final MaxLengthFinder maxLengthFinder = new MaxLengthFinder(index);
-      FilteredResultFactory.produceTabularSubset(_dataSource, _appDbSchema, _study, entity, variables, List.of(), new TabularReportConfig(), maxLengthFinder);
+      FilteredResultFactory.produceTabularSubset(_db, _appDbSchema, _study, entity, variables, List.of(), new TabularReportConfig(), maxLengthFinder);
       return maxLengthFinder.getMaxLength();
     }
     catch (Exception e) {

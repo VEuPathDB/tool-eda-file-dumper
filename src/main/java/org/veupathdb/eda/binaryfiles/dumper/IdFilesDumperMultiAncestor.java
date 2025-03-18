@@ -1,4 +1,5 @@
 package org.veupathdb.eda.binaryfiles.dumper;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,10 +10,10 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.gusdb.fgputil.DualBufferBinaryRecordReader;
 import org.veupathdb.eda.binaryfiles.BinaryValueWriter;
-import org.veupathdb.service.eda.ss.model.Entity;
-import org.veupathdb.service.eda.ss.model.Study;
-import org.veupathdb.service.eda.ss.model.variable.binary.*;
-import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager.Operation;
+import org.veupathdb.service.eda.subset.model.Entity;
+import org.veupathdb.service.eda.subset.model.Study;
+import org.veupathdb.service.eda.subset.model.variable.binary.*;
+import org.veupathdb.service.eda.subset.model.variable.binary.BinaryFilesManager.Operation;
 
 /**
  * Dump ID files for an entity that has more than one ancestor

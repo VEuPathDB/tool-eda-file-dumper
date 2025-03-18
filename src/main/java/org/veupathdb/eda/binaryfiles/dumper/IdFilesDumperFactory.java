@@ -1,8 +1,8 @@
 package org.veupathdb.eda.binaryfiles.dumper;
 
-import org.veupathdb.service.eda.ss.model.Entity;
-import org.veupathdb.service.eda.ss.model.Study;
-import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager;
+import org.veupathdb.service.eda.subset.model.Entity;
+import org.veupathdb.service.eda.subset.model.Study;
+import org.veupathdb.service.eda.subset.model.variable.binary.BinaryFilesManager;
 
 import java.util.Map;
 import java.util.concurrent.ExecutorService;

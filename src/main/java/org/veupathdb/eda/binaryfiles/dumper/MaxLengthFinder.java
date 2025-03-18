@@ -1,6 +1,6 @@
 package org.veupathdb.eda.binaryfiles.dumper;
 
-import org.veupathdb.service.eda.ss.model.tabular.TabularResponses;
+import org.veupathdb.service.eda.subset.model.tabular.TabularResponses;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
