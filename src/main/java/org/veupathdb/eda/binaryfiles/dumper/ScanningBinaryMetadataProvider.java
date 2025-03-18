@@ -1,12 +1,12 @@
 package org.veupathdb.eda.binaryfiles.dumper;
 
-import org.veupathdb.service.eda.ss.model.Entity;
-import org.veupathdb.service.eda.ss.model.Study;
-import org.veupathdb.service.eda.ss.model.db.FilteredResultFactory;
-import org.veupathdb.service.eda.ss.model.reducer.BinaryMetadataProvider;
-import org.veupathdb.service.eda.ss.model.tabular.TabularReportConfig;
-import org.veupathdb.service.eda.ss.model.variable.*;
-import org.veupathdb.service.eda.ss.model.variable.binary.EmptyBinaryProperties;
+import org.veupathdb.service.eda.subset.model.Entity;
+import org.veupathdb.service.eda.subset.model.Study;
+import org.veupathdb.service.eda.subset.model.db.FilteredResultFactory;
+import org.veupathdb.service.eda.subset.model.reducer.BinaryMetadataProvider;
+import org.veupathdb.service.eda.subset.model.tabular.TabularReportConfig;
+import org.veupathdb.service.eda.subset.model.variable.*;
+import org.veupathdb.service.eda.subset.model.variable.binary.EmptyBinaryProperties;
 
 import javax.sql.DataSource;
 import java.util.*;

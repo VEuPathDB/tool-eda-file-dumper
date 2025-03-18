@@ -9,12 +9,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.gusdb.fgputil.DualBufferBinaryRecordReader;
-import org.veupathdb.service.eda.ss.model.variable.binary.*;
+import org.veupathdb.service.eda.subset.model.variable.binary.*;
 import org.veupathdb.eda.binaryfiles.BinaryValueWriter;
-import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager.Operation;
-import org.veupathdb.service.eda.ss.model.Entity;
-import org.veupathdb.service.eda.ss.model.Study;
-import org.veupathdb.service.eda.ss.model.variable.VariableValueIdPair;
+import org.veupathdb.service.eda.subset.model.variable.binary.BinaryFilesManager.Operation;
+import org.veupathdb.service.eda.subset.model.Entity;
+import org.veupathdb.service.eda.subset.model.Study;
+import org.veupathdb.service.eda.subset.model.variable.VariableValueIdPair;
 
 /**
  * Dump ID files for an entity that has exactly one ancestor

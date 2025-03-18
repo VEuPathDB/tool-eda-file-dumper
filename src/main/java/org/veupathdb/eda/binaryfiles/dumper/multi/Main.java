@@ -5,12 +5,12 @@ import org.gusdb.fgputil.db.pool.DatabaseInstance;
 import org.gusdb.fgputil.db.pool.SimpleDbConfig;
 import org.veupathdb.eda.binaryfiles.dumper.ScanningBinaryMetadataProvider;
 import org.veupathdb.eda.binaryfiles.dumper.StudyDumper;
-import org.veupathdb.service.eda.ss.model.Study;
-import org.veupathdb.service.eda.ss.model.StudyOverview;
-import org.veupathdb.service.eda.ss.model.db.StudyFactory;
-import org.veupathdb.service.eda.ss.model.db.VariableFactory;
-import org.veupathdb.service.eda.ss.model.reducer.EmptyBinaryMetadataProvider;
-import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager;
+import org.veupathdb.service.eda.subset.model.Study;
+import org.veupathdb.service.eda.subset.model.StudyOverview;
+import org.veupathdb.service.eda.subset.model.db.StudyFactory;
+import org.veupathdb.service.eda.subset.model.db.VariableFactory;
+import org.veupathdb.service.eda.subset.model.reducer.EmptyBinaryMetadataProvider;
+import org.veupathdb.service.eda.subset.model.variable.binary.BinaryFilesManager;
 
 import javax.sql.DataSource;
 

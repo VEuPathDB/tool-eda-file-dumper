@@ -6,13 +6,13 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.json.JSONArray;
-import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager;
+import org.veupathdb.service.eda.subset.model.variable.binary.BinaryFilesManager;
 import org.veupathdb.eda.binaryfiles.BinaryValueWriter;
-import org.veupathdb.service.eda.ss.model.variable.binary.BinaryFilesManager.Operation;
-import org.veupathdb.service.eda.ss.model.Entity;
-import org.veupathdb.service.eda.ss.model.Study;
-import org.veupathdb.service.eda.ss.model.variable.VariableValueIdPair;
-import org.veupathdb.service.eda.ss.model.variable.VariableWithValues;
+import org.veupathdb.service.eda.subset.model.variable.binary.BinaryFilesManager.Operation;
+import org.veupathdb.service.eda.subset.model.Entity;
+import org.veupathdb.service.eda.subset.model.Study;
+import org.veupathdb.service.eda.subset.model.variable.VariableValueIdPair;
+import org.veupathdb.service.eda.subset.model.variable.VariableWithValues;
 
 public class VariableFilesDumper<T> implements FilesDumper {
   private BinaryValueWriter<VariableValueIdPair<T>> _varFileWriter;

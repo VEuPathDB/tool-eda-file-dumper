@@ -1,6 +1,6 @@
 package org.veupathdb.eda.binaryfiles;
 
-import org.veupathdb.service.eda.ss.model.variable.binary.BinarySerializer;
+import org.veupathdb.service.eda.subset.model.variable.binary.BinarySerializer;
 
 import java.io.IOException;
 import java.io.OutputStream;

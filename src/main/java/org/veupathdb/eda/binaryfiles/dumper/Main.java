@@ -1,6 +1,5 @@
 package org.veupathdb.eda.binaryfiles.dumper;
 
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -14,11 +13,11 @@ import java.util.Properties;
 import org.gusdb.fgputil.db.platform.SupportedPlatform;
 import org.gusdb.fgputil.db.pool.DatabaseInstance;
 import org.gusdb.fgputil.db.pool.SimpleDbConfig;
-import org.veupathdb.service.eda.ss.model.Study;
-import org.veupathdb.service.eda.ss.model.StudyOverview;
-import org.veupathdb.service.eda.ss.model.db.StudyFactory;
-import org.veupathdb.service.eda.ss.model.db.VariableFactory;
-import org.veupathdb.service.eda.ss.model.reducer.EmptyBinaryMetadataProvider;
+import org.veupathdb.service.eda.subset.model.Study;
+import org.veupathdb.service.eda.subset.model.StudyOverview;
+import org.veupathdb.service.eda.subset.model.db.StudyFactory;
+import org.veupathdb.service.eda.subset.model.db.VariableFactory;
+import org.veupathdb.service.eda.subset.model.reducer.EmptyBinaryMetadataProvider;
 
 
 public class Main {
