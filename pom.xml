@@ -48,6 +48,14 @@
       <scope>runtime</scope>
     </dependency>
 
+    <!-- Runtime dependency on PostgreSQL driver -->
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>42.7.5</version>
+      <scope>runtime</scope>
+    </dependency>
+
     <!-- used by file printer -->
     <dependency>
       <groupId>com.googlecode.json-simple</groupId>
