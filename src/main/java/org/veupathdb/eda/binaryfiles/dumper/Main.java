@@ -59,16 +59,16 @@ public class Main {
       // Create a variable factory which can provide undecorated study metadata. This is used to provide the necessary
       // metadata to generate binary files.
       VariableFactory undecoratedVariableFactory = new VariableFactory(dataSource, APP_DB_SCHEMA, new EmptyBinaryMetadataProvider(), study -> true);
-      StudyFactory undecoratedStudyFactory = new StudyFactory(dataSource, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED, undecoratedVariableFactory);
+      StudyFactory undecoratedStudyFactory = new StudyFactory(dataSource, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED, undecoratedVariableFactory, true);
       Study undecoratedStudy = undecoratedStudyFactory.getStudyById(studyId);
-      ScanningBinaryMetadataProvider metadataProvider = new ScanningBinaryMetadataProvider(undecoratedStudy, dataSource, APP_DB_SCHEMA);
+      ScanningBinaryMetadataProvider metadataProvider = new ScanningBinaryMetadataProvider(undecoratedStudy, dbInstance, APP_DB_SCHEMA);
 
       // Create variable and study factories used to provide binary encoding metadata.
       VariableFactory metadataDecoratedStudyFactory = new VariableFactory(dataSource, APP_DB_SCHEMA, metadataProvider, study -> true);
-      StudyFactory studyFactory = new StudyFactory(dataSource, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED, metadataDecoratedStudyFactory);
+      StudyFactory studyFactory = new StudyFactory(dataSource, APP_DB_SCHEMA, StudyOverview.StudySourceType.CURATED, metadataDecoratedStudyFactory, true);
       Study study = studyFactory.getStudyById(studyId);
       
-      StudyDumper studyDumper = new StudyDumper(dataSource, APP_DB_SCHEMA, studiesDirectory, study);
+      StudyDumper studyDumper = new StudyDumper(dbInstance, APP_DB_SCHEMA, studiesDirectory, study);
       studyDumper.dumpStudy();
     }
   }

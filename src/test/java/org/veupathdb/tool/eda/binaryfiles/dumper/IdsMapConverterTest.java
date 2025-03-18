@@ -2,8 +2,8 @@ package org.veupathdb.tool.eda.binaryfiles.dumper;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.veupathdb.service.eda.ss.model.variable.binary.RecordIdValues;
-import org.veupathdb.service.eda.ss.model.variable.binary.RecordIdValuesConverter;
+import org.veupathdb.service.eda.subset.model.variable.binary.RecordIdValues;
+import org.veupathdb.service.eda.subset.model.variable.binary.RecordIdValuesConverter;
 
 import java.util.List;
 

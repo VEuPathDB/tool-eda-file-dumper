@@ -1,5 +1,6 @@
 package org.veupathdb.eda.binaryfiles.dumper;
 
+import org.gusdb.fgputil.db.pool.DatabaseInstance;
 import org.veupathdb.service.eda.subset.model.Entity;
 import org.veupathdb.service.eda.subset.model.Study;
 import org.veupathdb.service.eda.subset.model.db.FilteredResultFactory;
@@ -16,13 +17,14 @@ import java.util.*;
  * when the binary files are being generated, since the metadata file is not available.
  */
 public class ScanningBinaryMetadataProvider implements BinaryMetadataProvider {
+
     private Study study;
-    private DataSource dataSource;
+    private DatabaseInstance db;
     private String schema;
 
-    public ScanningBinaryMetadataProvider(Study study, DataSource dataSource, String schema) {
+    public ScanningBinaryMetadataProvider(Study study, DatabaseInstance db, String schema) {
         this.study = study;
-        this.dataSource = dataSource;
+        this.db = db;
         this.schema = schema;
     }
 
@@ -39,7 +41,7 @@ public class ScanningBinaryMetadataProvider implements BinaryMetadataProvider {
                 || varWithValues.getType() == VariableType.NUMBER
                 || varWithValues.getType() == VariableType.STRING) {
                 final MaxLengthFinder maxLengthFinder = new MaxLengthFinder(fullyPopulatedEntity.getAncestorEntities().size() + 1);
-                FilteredResultFactory.produceTabularSubset(dataSource, schema, study, fullyPopulatedEntity, List.of(varWithValues), List.of(), new TabularReportConfig(), maxLengthFinder);
+                FilteredResultFactory.produceTabularSubset(db, schema, study, fullyPopulatedEntity, List.of(varWithValues), List.of(), new TabularReportConfig(), maxLengthFinder);
                 return Optional.of(new Utf8EncodingLengthProperties(maxLengthFinder.getMaxLength()));
             } else {
                 return Optional.of(new EmptyBinaryProperties());
