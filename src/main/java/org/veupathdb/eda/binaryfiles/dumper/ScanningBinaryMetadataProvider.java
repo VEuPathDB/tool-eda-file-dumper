@@ -1,16 +1,20 @@
 package org.veupathdb.eda.binaryfiles.dumper;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.gusdb.fgputil.db.pool.DatabaseInstance;
 import org.veupathdb.service.eda.subset.model.Entity;
 import org.veupathdb.service.eda.subset.model.Study;
 import org.veupathdb.service.eda.subset.model.db.FilteredResultFactory;
 import org.veupathdb.service.eda.subset.model.reducer.BinaryMetadataProvider;
 import org.veupathdb.service.eda.subset.model.tabular.TabularReportConfig;
-import org.veupathdb.service.eda.subset.model.variable.*;
+import org.veupathdb.service.eda.subset.model.variable.BinaryProperties;
+import org.veupathdb.service.eda.subset.model.variable.Utf8EncodingLengthProperties;
+import org.veupathdb.service.eda.subset.model.variable.Variable;
+import org.veupathdb.service.eda.subset.model.variable.VariableType;
+import org.veupathdb.service.eda.subset.model.variable.VariableWithValues;
 import org.veupathdb.service.eda.subset.model.variable.binary.EmptyBinaryProperties;
-
-import javax.sql.DataSource;
-import java.util.*;
 
 /**
  * Provides study metadata needed for binary encoding by scanning the database. This implementation is intended for use
@@ -36,7 +40,7 @@ public class ScanningBinaryMetadataProvider implements BinaryMetadataProvider {
                 .getVariable(variableId)
                 .orElseThrow();
         if (var instanceof VariableWithValues) {
-            VariableWithValues varWithValues = (VariableWithValues) var;
+            VariableWithValues<?> varWithValues = (VariableWithValues<?>) var;
             if (varWithValues.getType() == VariableType.LONGITUDE
                 || varWithValues.getType() == VariableType.NUMBER
                 || varWithValues.getType() == VariableType.STRING) {

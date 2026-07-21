@@ -1,5 +1,13 @@
 package org.veupathdb.eda.binaryfiles.dumper;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.json.JSONArray;
 import org.veupathdb.eda.binaryfiles.BinaryValueWriter;
 import org.veupathdb.service.eda.subset.model.Entity;
@@ -9,12 +17,7 @@ import org.veupathdb.service.eda.subset.model.variable.VariableWithValues;
 import org.veupathdb.service.eda.subset.model.variable.binary.BinaryFilesManager;
 import org.veupathdb.service.eda.subset.model.variable.binary.BinaryFilesManager.Operation;
 import org.veupathdb.service.eda.subset.model.variable.binary.BinarySerializer;
-import org.veupathdb.service.eda.subset.model.variable.binary.StringValueConverter;
 import org.veupathdb.service.eda.subset.model.variable.binary.ValueWithIdSerializer;
-
-import java.io.*;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class VariableFilesStringDumper<T> implements FilesDumper {
   private BinaryValueWriter<VariableValueIdPair<String>> _varFileWriter;

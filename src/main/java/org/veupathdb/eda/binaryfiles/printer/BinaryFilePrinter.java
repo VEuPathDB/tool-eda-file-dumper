@@ -5,20 +5,26 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.gusdb.fgputil.DualBufferBinaryRecordReader;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.veupathdb.service.eda.subset.model.variable.Utf8EncodingLengthProperties;
-import org.veupathdb.service.eda.subset.model.variable.binary.*;
 import org.veupathdb.service.eda.subset.model.variable.VariableType;
 import org.veupathdb.service.eda.subset.model.variable.VariableValueIdPair;
+import org.veupathdb.service.eda.subset.model.variable.binary.BinaryConverter;
+import org.veupathdb.service.eda.subset.model.variable.binary.BinaryFilesManager;
+import org.veupathdb.service.eda.subset.model.variable.binary.ListConverter;
+import org.veupathdb.service.eda.subset.model.variable.binary.LongValueConverter;
+import org.veupathdb.service.eda.subset.model.variable.binary.RecordIdValues;
+import org.veupathdb.service.eda.subset.model.variable.binary.RecordIdValuesConverter;
+import org.veupathdb.service.eda.subset.model.variable.binary.StringValueConverter;
+import org.veupathdb.service.eda.subset.model.variable.binary.ValueWithIdDeserializer;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /*
  * Print to tab delimited text the contents of binary files produced by the eda binary file dumper.

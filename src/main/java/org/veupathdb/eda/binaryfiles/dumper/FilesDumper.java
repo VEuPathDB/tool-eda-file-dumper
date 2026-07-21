@@ -22,7 +22,7 @@ public interface FilesDumper extends TabularResponses.ResultConsumer, AutoClosea
       final FileOutputStream outStream = new FileOutputStream(file);
       final BufferedOutputStream bufStream = new BufferedOutputStream(outStream);
       final BinarySerializer<VariableValueIdPair<T>> serializer = new ValueWithIdSerializer<T>(converter);
-      return new BinaryValueWriter(bufStream, serializer);
+      return new BinaryValueWriter<>(bufStream, serializer);
     } catch (FileNotFoundException e) {
       throw new RuntimeException(e);
     }    
@@ -33,7 +33,7 @@ public interface FilesDumper extends TabularResponses.ResultConsumer, AutoClosea
     try {
       final FileOutputStream outStream = new FileOutputStream(idMapFile);
       final BufferedOutputStream bufStream = new BufferedOutputStream(outStream);
-      return new BinaryValueWriter(bufStream, idsMapSerializer);
+      return new BinaryValueWriter<>(bufStream, idsMapSerializer);
     } catch (FileNotFoundException e) {
       throw new RuntimeException(e);
     }    
@@ -56,7 +56,7 @@ public interface FilesDumper extends TabularResponses.ResultConsumer, AutoClosea
     try {
       final FileOutputStream outStream = new FileOutputStream(file);
       final BufferedOutputStream bufStream = new BufferedOutputStream(outStream);
-      return new BinaryValueWriter(bufStream, converter);
+      return new BinaryValueWriter<>(bufStream, converter);
     } catch (FileNotFoundException e) {
       throw new RuntimeException(e);
     }    

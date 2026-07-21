@@ -1,5 +1,16 @@
 package org.veupathdb.eda.binaryfiles.dumper.multi;
 
+import static org.gusdb.fgputil.runtime.Environment.getRequiredVar;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import javax.sql.DataSource;
+
 import org.gusdb.fgputil.db.platform.SupportedPlatform;
 import org.gusdb.fgputil.db.pool.DatabaseInstance;
 import org.gusdb.fgputil.db.pool.SimpleDbConfig;
@@ -10,18 +21,6 @@ import org.veupathdb.service.eda.subset.model.StudyOverview;
 import org.veupathdb.service.eda.subset.model.db.StudyFactory;
 import org.veupathdb.service.eda.subset.model.db.VariableFactory;
 import org.veupathdb.service.eda.subset.model.reducer.EmptyBinaryMetadataProvider;
-import org.veupathdb.service.eda.subset.model.variable.binary.BinaryFilesManager;
-
-import javax.sql.DataSource;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.gusdb.fgputil.runtime.Environment.getRequiredVar;
 
 public class Main {
   private static final String APP_DB_SCHEMA = "eda.";
@@ -44,7 +43,6 @@ public class Main {
     }
 
     List<FailedStudy> failedStudies = new ArrayList<>();
-    final BinaryFilesManager binaryFilesManager = new BinaryFilesManager(studiesDirectory);
 
     // instantiate a connection to the database
     try (DatabaseInstance appDb = new DatabaseInstance(SimpleDbConfig.create(
